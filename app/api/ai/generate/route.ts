@@ -31,12 +31,13 @@ const DEMO: Record<string, any> = {
 // ── OpenRouter API call ───────────────────────────────────────
 async function callOpenRouter(prompt: string, apiKey: string): Promise<string> {
   // Try multiple free models
+  // Updated May 2026 — use openrouter/free router which auto-selects best available free model
   const models = [
-    'meta-llama/llama-3.3-70b-instruct:free',
+    'openrouter/free',
     'deepseek/deepseek-chat:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
     'google/gemma-3-27b-it:free',
-    'meta-llama/llama-3.1-8b-instruct:free',
-    'mistralai/mistral-7b-instruct:free',
+    'qwen/qwen3-8b:free',
   ]
 
   let lastError = ''
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
       adcopy:   `Generate 3 high-converting ${platform} ad copies for: "${product}". Tone: ${tone}. CTA: ${cta}. Return ONLY a JSON array: [{"headline":"...","description":"...","cta":"...","score":85}]`,
       headline: `Write 5 powerful marketing headlines for: "${product}". Return ONLY a JSON array: [{"headline":"...","type":"benefit","score":90}]`,
       post:     `Write an engaging ${platform} social media post for: "${product}". Tone: ${tone}. Include emojis. Return ONLY JSON: {"caption":"...","hook":"...","cta":"...","hashtags":["#tag1","#tag2"],"charCount":300}`,
-      article:  `Write a 600-word article about: "${product}". Return ONLY JSON: {"title":"...","intro":"...","sections":[{"heading":"...","content":"..."},{"heading":"...","content":"..."},{"heading":"...","content":"..."}],"conclusion":"...","hashtags":["#tag"],"wordCount":600,"readTime":"3 min"}`,
+      article:  `Write a 700-word article about: "${product}". Return ONLY JSON: {"title":"...","intro":"...","sections":[{"heading":"...","content":"..."},{"heading":"...","content":"..."},{"heading":"...","content":"..."}],"conclusion":"...","hashtags":["#tag"],"wordCount":600,"readTime":"3 min"}`,
       reel:     `Write a 45-second viral reel script for: "${product}". Return ONLY JSON: {"hook":"...","voiceover":"...","onScreenText":["...","...","...","..."],"cta":"...","duration":"45s","hashtags":["#tag"],"musicMood":"upbeat"}`,
       hashtags: `Generate 20 powerful hashtags for "${product}" on ${platform}. Return ONLY JSON: {"hashtags":["#tag1","#tag2"],"strategy":"brief explanation"}`,
       caption:  `Write 2 social media captions for "${product}" on ${platform}. Tone: ${tone}. Include emojis. Return ONLY JSON array: [{"caption":"...","tone":"professional"},{"caption":"...","tone":"casual"}]`,
@@ -165,7 +166,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, data, demo: false })
 
-  } catch (e: any) {
-    return NextResponse.json({ success: true, data: DEMO['adcopy'], demo: true })
+  } catch (e: any) {   return NextResponse.json({ success: true, data: DEMO['adcopy'], demo: true })
   }
 }

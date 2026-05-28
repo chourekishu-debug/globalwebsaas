@@ -21,7 +21,7 @@ export async function GET() {
           'X-Title': 'Global Web AI Test',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.1-8b-instruct:free',
+          model: 'openrouter/free',
           messages: [{ role: 'user', content: 'Reply with: {"test":"ok"}' }],
           max_tokens: 20,
         }),
