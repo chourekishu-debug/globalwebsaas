@@ -2,7 +2,8 @@
 import { useState } from 'react'
 
 const API_KEYS_CONFIG = [
-  { key:'anthropicKey',     label:'Anthropic API Key',   hint:'sk-ant-api03-...', group:'AI', link:'https://console.anthropic.com' },
+  { key:'openrouterKey',    label:'OpenRouter API Key (FREE — Recommended)', hint:'sk-or-v1-...', group:'AI', link:'https://openrouter.ai/keys' },
+  { key:'anthropicKey',     label:'Anthropic API Key (Optional — Paid)', hint:'sk-ant-api03-...', group:'AI', link:'https://console.anthropic.com' },
   { key:'metaAccessToken',  label:'Meta Access Token',   hint:'EAAx...', group:'Ads', link:'https://developers.facebook.com/apps' },
   { key:'metaAdAccountId',  label:'Meta Ad Account ID',  hint:'act_123456789', group:'Ads', link:'https://business.facebook.com' },
   { key:'googleAdsToken',   label:'Google Ads Dev Token',hint:'xxxxxxxxxxxxxxxx', group:'Ads', link:'https://ads.google.com' },
@@ -54,11 +55,11 @@ export default function SettingsPage() {
       {tab === 'api' && (
         <div>
           {/* Info banner */}
-          <div style={{ background:'rgba(108,71,255,.08)', border:'1px solid rgba(108,71,255,.2)', borderRadius:12, padding:'12px 16px', marginBottom:18, display:'flex', gap:12 }}>
-            <span style={{ fontSize:18 }}>💡</span>
+          <div style={{ background:'rgba(0,212,170,.08)', border:'1px solid rgba(0,212,170,.2)', borderRadius:12, padding:'12px 16px', marginBottom:18, display:'flex', gap:12 }}>
+            <span style={{ fontSize:18 }}>🆓</span>
             <div>
-              <div style={{ fontSize:13, fontWeight:600, marginBottom:3 }}>Platform works in demo mode without any keys</div>
-              <div style={{ fontSize:12, color:'#9090b8' }}>Add your Anthropic key first for real AI generation. All other keys needed only when going live with real clients.</div>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:3, color:'#00d4aa' }}>Add OpenRouter key for FREE real AI generation</div>
+              <div style={{ fontSize:12, color:'#9090b8' }}>Get your free key at <strong style={{color:'#6c47ff'}}>openrouter.ai</strong> → Sign in with Google → Keys → Create Key. Free models: Llama 3.3, DeepSeek, Gemma. No credit card needed.</div>
             </div>
           </div>
 
