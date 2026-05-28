@@ -190,7 +190,14 @@ async function callOpenRouter(prompt: string, apiKey: string): Promise<string> {
 
       const data = await res.json()
       if (data.error) { lastError = data.error.message || JSON.stringify(data.error); continue }
-      const text = data.choices?.[0]?.message?.content || ''
+      // Some models return JSON in reasoning field when content is null
+      const msg = data.choices?.[0]?.message || {}
+      let text = msg.content || ''
+      if (!text && msg.reasoning) {
+        // Extract JSON from reasoning text
+        const match = msg.reasoning.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
+        if (match) text = match[0]
+      }
       if (text && text.length > 10) return text
     } catch (e: any) {
       lastError = e.message
