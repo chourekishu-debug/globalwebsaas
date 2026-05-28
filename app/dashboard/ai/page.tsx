@@ -231,50 +231,94 @@ function CaptionsResult({ data }: { data: any }) {
 
 function AudienceResult({ data }: { data: any }) {
   const segments = data?.segments || [];
+  const colors = [
+    { border: 'border-blue-600/40', badge: 'bg-blue-600', dot: 'bg-blue-400' },
+    { border: 'border-orange-600/40', badge: 'bg-orange-600', dot: 'bg-orange-400' },
+    { border: 'border-emerald-600/40', badge: 'bg-emerald-600', dot: 'bg-emerald-400' },
+  ];
   return (
     <div className="space-y-4">
-      {segments.map((seg: any, i: number) => (
-        <div key={i} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
-          <div className="flex justify-between items-start mb-3">
-            <h3 className="text-white font-bold text-sm">{seg.name}</h3>
-            <span className="text-xs text-green-400 font-bold shrink-0 ml-2">CPL: {seg.cpl}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <div>
-              <p className="text-xs text-gray-500">Audience Size</p>
-              <p className="text-gray-200 text-xs font-medium">{seg.size}</p>
+      {segments.map((seg: any, i: number) => {
+        const c = colors[i % colors.length];
+        return (
+          <div key={i} className={`bg-gray-800 rounded-xl p-4 border ${c.border}`}>
+            {/* Header */}
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <span className={`w-2 h-2 rounded-full ${c.dot} shrink-0 mt-0.5`} />
+                <h3 className="text-white font-bold text-sm">{seg.name}</h3>
+              </div>
+              <span className="text-xs text-green-400 font-bold shrink-0 ml-2 bg-green-900/30 px-2 py-0.5 rounded-full">CPL: {seg.cpl}</span>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Income</p>
-              <p className="text-gray-200 text-xs font-medium">{seg.income}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Best Time</p>
-              <p className="text-gray-200 text-xs font-medium">{seg.bestTime}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Platforms</p>
-              <p className="text-gray-200 text-xs font-medium">{Array.isArray(seg.platforms) ? seg.platforms.join(', ') : seg.platforms}</p>
-            </div>
-          </div>
-          {seg.interests && (
-            <div className="mb-3">
-              <p className="text-xs text-gray-500 mb-1">Interests</p>
-              <div className="flex flex-wrap gap-1">
-                {(Array.isArray(seg.interests) ? seg.interests : [seg.interests]).map((int: string, j: number) => (
-                  <span key={j} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{int}</span>
-                ))}
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="bg-gray-900/50 rounded-lg p-2">
+                <p className="text-xs text-gray-500 mb-0.5">📍 Audience Size</p>
+                <p className="text-gray-100 text-xs font-semibold">{seg.size}</p>
+              </div>
+              <div className="bg-gray-900/50 rounded-lg p-2">
+                <p className="text-xs text-gray-500 mb-0.5">💰 Income Range</p>
+                <p className="text-gray-100 text-xs font-semibold">{seg.income}</p>
+              </div>
+              <div className="bg-gray-900/50 rounded-lg p-2">
+                <p className="text-xs text-gray-500 mb-0.5">🕐 Best Time</p>
+                <p className="text-gray-100 text-xs font-semibold">{seg.bestTime}</p>
+              </div>
+              <div className="bg-gray-900/50 rounded-lg p-2">
+                <p className="text-xs text-gray-500 mb-0.5">📱 Platforms</p>
+                <p className="text-gray-100 text-xs font-semibold">{Array.isArray(seg.platforms) ? seg.platforms.join(' + ') : seg.platforms}</p>
               </div>
             </div>
-          )}
-          {seg.message && (
-            <div className="bg-purple-900/30 border border-purple-600/30 rounded-lg p-2">
-              <p className="text-xs text-purple-400">💬 Ad Message</p>
-              <p className="text-gray-200 text-xs mt-1">{seg.message}</p>
-            </div>
-          )}
-        </div>
-      ))}
+
+            {/* Pain Points */}
+            {seg.painPoints?.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-red-400 mb-1.5">😣 Pain Points (what they struggle with)</p>
+                <div className="space-y-1">
+                  {(Array.isArray(seg.painPoints) ? seg.painPoints : [seg.painPoints]).map((p: string, j: number) => (
+                    <div key={j} className="flex items-start gap-1.5">
+                      <span className="text-red-500 text-xs mt-0.5">•</span>
+                      <p className="text-gray-300 text-xs">{p}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Interests */}
+            {seg.interests?.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-gray-500 mb-1.5">❤️ Interests & Behaviours</p>
+                <div className="flex flex-wrap gap-1">
+                  {(Array.isArray(seg.interests) ? seg.interests : [seg.interests]).map((int: string, j: number) => (
+                    <span key={j} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{int}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Ad Angle */}
+            {seg.adAngle && (
+              <div className="mb-3 bg-yellow-900/20 border border-yellow-600/20 rounded-lg p-2">
+                <p className="text-xs text-yellow-400 mb-0.5">🎯 Ad Strategy Angle</p>
+                <p className="text-gray-200 text-xs">{seg.adAngle}</p>
+              </div>
+            )}
+
+            {/* Ad Message */}
+            {seg.message && (
+              <div className={`bg-purple-900/30 border border-purple-600/30 rounded-lg p-2.5`}>
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-xs text-purple-400">💬 Winning Ad Message</p>
+                  <button onClick={() => copyToClipboard(seg.message)} className="text-xs text-gray-500 hover:text-white">📋</button>
+                </div>
+                <p className="text-white text-xs font-medium">{seg.message}</p>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
