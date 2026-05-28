@@ -1,370 +1,495 @@
-'use client'
-import { useState } from 'react'
+'use client';
+
+import { useState } from 'react';
 
 const TOOLS = [
-  { key:'adcopy',   label:'Ad Copy',      icon:'📢', desc:'3 variations with quality scores' },
-  { key:'headline', label:'Headlines',    icon:'🎯', desc:'5 powerful headline variants' },
-  { key:'post',     label:'Social Post',  icon:'📱', desc:'Full post with hook & CTA' },
-  { key:'article',  label:'Article',      icon:'📰', desc:'700+ word long-form content' },
-  { key:'reel',     label:'Reel Script',  icon:'🎬', desc:'Hook + voiceover + slides' },
-  { key:'hashtags', label:'Hashtags',     icon:'#️⃣', desc:'20 high-reach tags + strategy' },
-  { key:'caption',  label:'Captions',     icon:'✍️', desc:'2 platform-specific captions' },
-  { key:'audience', label:'Audience AI',  icon:'👥', desc:'3 targeting segments with CPL' },
-]
-const PLATFORMS = ['Meta','Google','LinkedIn','Instagram','WhatsApp']
-const TONES     = ['Professional','Casual & Friendly','Humorous','Inspirational','Promotional']
+  { id: 'ad-copy', label: 'Ad Copy', icon: '📢', desc: '3 variations with quality scores' },
+  { id: 'headlines', label: 'Headlines', icon: '🎯', desc: '5 powerful headline variants' },
+  { id: 'social-post', label: 'Social Post', icon: '📱', desc: 'Full post with hook & CTA' },
+  { id: 'article', label: 'Article', icon: '📄', desc: '700+ word long-form content' },
+  { id: 'reel-script', label: 'Reel Script', icon: '🎬', desc: 'Hook + voiceover + slides' },
+  { id: 'hashtags', label: 'Hashtags', icon: '#️⃣', desc: '20 high-reach tags + strategy' },
+  { id: 'captions', label: 'Captions', icon: '✍️', desc: '2 platform-specific captions' },
+  { id: 'audience-ai', label: 'Audience AI', icon: '👥', desc: '3 targeting segments with CPL' },
+];
 
-export default function AIGeneratorPage() {
-  const [tool, setTool]         = useState('adcopy')
-  const [platform, setPlatform] = useState('Meta')
-  const [tone, setTone]         = useState('Professional')
-  const [product, setProduct]   = useState('')
-  const [cta, setCta]           = useState('')
-  const [loading, setLoading]   = useState(false)
-  const [result, setResult]     = useState<any>(null)
-  const [copied, setCopied]     = useState<string|null>(null)
-  const [history, setHistory]   = useState<any[]>([])
-  const [error, setError]       = useState('')
+const TONES = ['Professional', 'Casual', 'Urgent', 'Inspirational', 'Humorous', 'Luxury'];
+const PLATFORMS = ['Instagram', 'Facebook', 'LinkedIn', 'Twitter', 'YouTube', 'WhatsApp'];
 
-  const generate = async () => {
-    if (!product.trim() || loading) return
-    setLoading(true); setResult(null); setError('')
-    try {
-      const res = await fetch('/api/ai/generate', {
-        method:'POST',
-        headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ type:tool, product, platform:platform.toLowerCase(), tone:tone.toLowerCase(), cta }),
-      })
-      const json = await res.json()
-      if (json.success && json.data) {
-        setResult({ data: json.data, demo: json.demo, type: tool })
-        setHistory(p => [{ tool, platform, product, time:new Date().toLocaleTimeString() }, ...p.slice(0,4)])
-      } else {
-        setError('Generation failed — please try again')
-      }
-    } catch(e) {
-      setError('Network error — please check connection')
-    }
-    setLoading(false)
+function copyToClipboard(text: string) {
+  navigator.clipboard.writeText(text).catch(() => {});
+}
+
+function flattenToText(obj: any, indent = 0): string {
+  if (typeof obj === 'string') return obj;
+  if (typeof obj === 'number') return String(obj);
+  if (Array.isArray(obj)) return obj.map(v => flattenToText(v, indent)).join('\n');
+  if (typeof obj === 'object' && obj !== null) {
+    return Object.entries(obj)
+      .map(([k, v]) => `${' '.repeat(indent)}${k}: ${flattenToText(v, indent + 2)}`)
+      .join('\n');
   }
+  return '';
+}
 
-  const copy = (text: string, id: string) => {
-    if (!text) return
-    navigator.clipboard.writeText(text)
-    setCopied(id)
-    setTimeout(() => setCopied(null), 2000)
-  }
-
-  const d = result?.data
-
+// ─── RENDERERS ────────────────────────────────────────────────
+function AdCopyResult({ data }: { data: any }) {
+  const variations = data?.variations || [];
   return (
-    <div className="fade-in">
-      <div style={{ marginBottom:16 }}>
-        <h2 style={{ fontFamily:'Syne,sans-serif', fontSize:20, fontWeight:700, margin:'0 0 4px' }}>🤖 AI Content Generator</h2>
-        <p style={{ color:'#9090b8', fontSize:13, margin:0 }}>Powered by AI · Type your business → get ready-to-publish content instantly</p>
-      </div>
-
-      <div style={{ display:'grid', gridTemplateColumns:'300px 1fr', gap:16 }}>
-        {/* ── LEFT PANEL ── */}
-        <div>
-          <div className="card" style={{ marginBottom:12 }}>
-            <div style={{ fontSize:11, color:'#9090b8', fontWeight:600, marginBottom:10, letterSpacing:1 }}>CONTENT TYPE</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:7 }}>
-              {TOOLS.map(t => (
-                <div key={t.key} onClick={() => { setTool(t.key); setResult(null) }}
-                  style={{ padding:'9px 10px', borderRadius:10, border:`1.5px solid ${tool===t.key?'#6c47ff':'rgba(255,255,255,.07)'}`, background:tool===t.key?'rgba(108,71,255,.12)':'rgba(255,255,255,.03)', cursor:'pointer', transition:'all .15s' }}>
-                  <div style={{ fontSize:16, marginBottom:3 }}>{t.icon}</div>
-                  <div style={{ fontSize:11, fontWeight:700, color:tool===t.key?'#c4b5fd':'#f0f0ff' }}>{t.label}</div>
-                  <div style={{ fontSize:9, color:'#5a5a80', marginTop:2 }}>{t.desc}</div>
-                </div>
-              ))}
-            </div>
+    <div className="space-y-4">
+      {variations.map((v: any, i: number) => (
+        <div key={i} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full">{v.platform || `Variation ${i + 1}`}</span>
+            {v.score && <span className="text-xs text-green-400 font-bold">Score: {v.score}/100</span>}
           </div>
-
-          <div className="card" style={{ marginBottom:12 }}>
-            <div className="input-group">
-              <label>Product / Business *</label>
-              <textarea className="input-field" rows={3} style={{ resize:'none' }}
-                placeholder="e.g. PSC Coaching Institute Indore, batch starts June 2026"
-                value={product} onChange={e => setProduct(e.target.value)}
-                onKeyDown={e => { if(e.key==='Enter' && e.ctrlKey) generate() }}/>
-            </div>
-            <div className="input-group">
-              <label>Platform</label>
-              <select className="input-field" value={platform} onChange={e => setPlatform(e.target.value)}>
-                {PLATFORMS.map(p => <option key={p}>{p}</option>)}
-              </select>
-            </div>
-            <div className="input-group">
-              <label>Tone</label>
-              <select className="input-field" value={tone} onChange={e => setTone(e.target.value)}>
-                {TONES.map(t => <option key={t}>{t}</option>)}
-              </select>
-            </div>
-            <div className="input-group" style={{ marginBottom:0 }}>
-              <label>Call to Action</label>
-              <input className="input-field" placeholder="e.g. Book Free Demo, Enroll Now"
-                value={cta} onChange={e => setCta(e.target.value)}/>
-            </div>
+          <h3 className="text-white font-bold text-base mb-1">{v.headline}</h3>
+          <p className="text-gray-300 text-sm mb-3">{v.body}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full">{v.cta}</span>
+            <button onClick={() => copyToClipboard(`${v.headline}\n\n${v.body}\n\n${v.cta}`)} className="text-xs text-gray-400 hover:text-white">📋 Copy</button>
           </div>
-
-          <button onClick={generate} disabled={loading || !product.trim()} className="btn btn-primary btn-full" style={{ padding:'13px', fontSize:14 }}>
-            {loading
-              ? <span style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                  <span style={{ width:14, height:14, border:'2px solid rgba(255,255,255,.3)', borderTopColor:'#fff', borderRadius:'50%', display:'inline-block', animation:'spin 0.7s linear infinite' }}/>
-                  AI Writing…
-                </span>
-              : '⚡ Generate with AI'}
-          </button>
-
-          {/* History */}
-          {history.length > 0 && (
-            <div className="card" style={{ marginTop:12 }}>
-              <div style={{ fontSize:11, color:'#9090b8', fontWeight:600, marginBottom:8, letterSpacing:1 }}>RECENT</div>
-              {history.map((h,i) => (
-                <div key={i} style={{ padding:'6px 0', borderBottom:'1px solid rgba(255,255,255,.04)', fontSize:11 }}>
-                  <div style={{ color:'#f0f0ff', fontWeight:500 }}>{h.product.slice(0,30)}…</div>
-                  <div style={{ color:'#5a5a80' }}>{h.tool} · {h.platform} · {h.time}</div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
+      ))}
+    </div>
+  );
+}
 
-        {/* ── RIGHT PANEL ── */}
-        <div>
-          {/* Empty state */}
-          {!result && !loading && !error && (
-            <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:400, textAlign:'center' }}>
-              <div style={{ fontSize:48, marginBottom:16 }}>🤖</div>
-              <h3 style={{ fontFamily:'Syne,sans-serif', fontSize:18, fontWeight:700, marginBottom:8 }}>Ready to Generate</h3>
-              <p style={{ color:'#9090b8', fontSize:13, maxWidth:320, lineHeight:1.6 }}>
-                Fill in your product/business details on the left, select a content type, then click Generate.
-              </p>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center', marginTop:16 }}>
-                {['Works for any niche','8 content formats','Copy in one click','Platform-specific'].map(t => (
-                  <div key={t} style={{ padding:'4px 12px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:11, color:'#c4b5fd' }}>{t}</div>
+function HeadlinesResult({ data }: { data: any }) {
+  const headlines = data?.headlines || [];
+  return (
+    <div className="space-y-3">
+      {headlines.map((h: any, i: number) => (
+        <div key={i} className="bg-gray-800 rounded-xl p-4 border border-gray-700 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-white font-semibold mb-1">{h.text}</p>
+            <span className="text-xs text-purple-400">{h.type}</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {h.score && <span className="text-xs text-green-400 font-bold">{h.score}</span>}
+            <button onClick={() => copyToClipboard(h.text)} className="text-xs text-gray-400 hover:text-white">📋</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SocialPostResult({ data }: { data: any }) {
+  const fullText = `${data?.hook || ''}\n\n${data?.body || ''}\n\n${data?.cta || ''}\n\n${data?.hashtags || ''}`;
+  return (
+    <div className="space-y-3">
+      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs bg-pink-600 text-white px-2 py-0.5 rounded-full">{data?.platform || 'Instagram'}</span>
+          <button onClick={() => copyToClipboard(fullText)} className="text-xs text-gray-400 hover:text-white">📋 Copy All</button>
+        </div>
+        {data?.hook && <p className="text-yellow-400 font-bold text-sm mb-2">🪝 {data.hook}</p>}
+        {data?.body && <p className="text-gray-200 text-sm whitespace-pre-line mb-3">{data.body}</p>}
+        {data?.cta && <p className="text-blue-400 text-sm mb-2">📲 {data.cta}</p>}
+        {data?.hashtags && <p className="text-purple-400 text-xs">{data.hashtags}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ArticleResult({ data }: { data: any }) {
+  const sections = data?.sections || [];
+  const fullText = [data?.title, data?.intro, ...sections.map((s: any) => `${s.heading}\n${s.content}`), data?.conclusion].filter(Boolean).join('\n\n');
+  return (
+    <div className="space-y-3">
+      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+        <div className="flex justify-between mb-3">
+          {data?.wordCount && <span className="text-xs text-green-400">~{data.wordCount} words</span>}
+          <button onClick={() => copyToClipboard(fullText)} className="text-xs text-gray-400 hover:text-white">📋 Copy Article</button>
+        </div>
+        {data?.title && <h2 className="text-white font-bold text-lg mb-2">{data.title}</h2>}
+        {data?.intro && <p className="text-gray-300 text-sm mb-3">{data.intro}</p>}
+        {sections.map((s: any, i: number) => (
+          <div key={i} className="mb-3">
+            <h3 className="text-purple-400 font-semibold text-sm mb-1">{s.heading}</h3>
+            <p className="text-gray-300 text-sm">{s.content}</p>
+          </div>
+        ))}
+        {data?.conclusion && (
+          <div className="border-t border-gray-700 pt-3 mt-3">
+            <p className="text-gray-300 text-sm italic">{data.conclusion}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReelScriptResult({ data }: { data: any }) {
+  const voiceover = data?.voiceover || [];
+  const slides = data?.slides || [];
+  return (
+    <div className="space-y-3">
+      {data?.hook && (
+        <div className="bg-yellow-900/30 border border-yellow-600/40 rounded-xl p-3">
+          <p className="text-xs text-yellow-400 mb-1">🪝 HOOK</p>
+          <p className="text-white font-bold">{data.hook}</p>
+        </div>
+      )}
+      {voiceover.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <p className="text-xs text-purple-400 mb-2">🎙️ VOICEOVER SCRIPT</p>
+          <div className="space-y-2">
+            {voiceover.map((v: any, i: number) => (
+              <div key={i} className="flex gap-3">
+                <span className="text-xs text-gray-500 shrink-0 w-14">{v.time}</span>
+                <p className="text-gray-200 text-sm">{v.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {slides.length > 0 && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <p className="text-xs text-blue-400 mb-2">🎞️ SLIDES</p>
+          <ol className="list-decimal list-inside space-y-1">
+            {slides.map((s: string, i: number) => (
+              <li key={i} className="text-gray-300 text-sm">{s}</li>
+            ))}
+          </ol>
+        </div>
+      )}
+      {data?.music && (
+        <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+          <p className="text-xs text-green-400 mb-1">🎵 MUSIC</p>
+          <p className="text-gray-300 text-sm">{data.music}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HashtagsResult({ data }: { data: any }) {
+  const allTags = [
+    ...(data?.primary || []),
+    ...(data?.niche || []),
+    ...(data?.trending || []),
+    ...(data?.engagement || [])
+  ].join(' ');
+  return (
+    <div className="space-y-3">
+      {[
+        { key: 'primary', label: '🔵 Primary', color: 'bg-blue-600' },
+        { key: 'niche', label: '🟣 Niche', color: 'bg-purple-600' },
+        { key: 'trending', label: '🔴 Trending', color: 'bg-red-600' },
+        { key: 'engagement', label: '🟢 Engagement', color: 'bg-green-600' },
+      ].map(({ key, label, color }) => (
+        data?.[key]?.length > 0 && (
+          <div key={key} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <p className="text-xs text-gray-400 mb-2">{label}</p>
+            <div className="flex flex-wrap gap-2">
+              {data[key].map((tag: string, i: number) => (
+                <span key={i} className={`text-xs ${color} text-white px-2 py-1 rounded-full`}>{tag}</span>
+              ))}
+            </div>
+          </div>
+        )
+      ))}
+      {data?.strategy && (
+        <div className="bg-gray-800 rounded-xl p-3 border border-gray-700">
+          <p className="text-xs text-yellow-400 mb-1">💡 Strategy</p>
+          <p className="text-gray-300 text-sm">{data.strategy}</p>
+        </div>
+      )}
+      <button onClick={() => copyToClipboard(allTags)} className="w-full text-sm text-gray-400 hover:text-white border border-gray-600 rounded-lg py-2">📋 Copy All Hashtags</button>
+    </div>
+  );
+}
+
+function CaptionsResult({ data }: { data: any }) {
+  return (
+    <div className="space-y-4">
+      {data?.instagram && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="flex justify-between mb-2">
+            <span className="text-xs bg-pink-600 text-white px-2 py-0.5 rounded-full">Instagram</span>
+            <button onClick={() => copyToClipboard(data.instagram.caption)} className="text-xs text-gray-400 hover:text-white">📋 Copy</button>
+          </div>
+          <p className="text-gray-200 text-sm whitespace-pre-line">{data.instagram.caption}</p>
+          {data.instagram.length && <p className="text-xs text-gray-500 mt-2">{data.instagram.length}</p>}
+        </div>
+      )}
+      {data?.facebook && (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="flex justify-between mb-2">
+            <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Facebook</span>
+            <button onClick={() => copyToClipboard(data.facebook.caption)} className="text-xs text-gray-400 hover:text-white">📋 Copy</button>
+          </div>
+          <p className="text-gray-200 text-sm whitespace-pre-line">{data.facebook.caption}</p>
+          {data.facebook.length && <p className="text-xs text-gray-500 mt-2">{data.facebook.length}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AudienceResult({ data }: { data: any }) {
+  const segments = data?.segments || [];
+  return (
+    <div className="space-y-4">
+      {segments.map((seg: any, i: number) => (
+        <div key={i} className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="flex justify-between items-start mb-3">
+            <h3 className="text-white font-bold text-sm">{seg.name}</h3>
+            <span className="text-xs text-green-400 font-bold shrink-0 ml-2">CPL: {seg.cpl}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <p className="text-xs text-gray-500">Audience Size</p>
+              <p className="text-gray-200 text-xs font-medium">{seg.size}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Income</p>
+              <p className="text-gray-200 text-xs font-medium">{seg.income}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Best Time</p>
+              <p className="text-gray-200 text-xs font-medium">{seg.bestTime}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Platforms</p>
+              <p className="text-gray-200 text-xs font-medium">{Array.isArray(seg.platforms) ? seg.platforms.join(', ') : seg.platforms}</p>
+            </div>
+          </div>
+          {seg.interests && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-500 mb-1">Interests</p>
+              <div className="flex flex-wrap gap-1">
+                {(Array.isArray(seg.interests) ? seg.interests : [seg.interests]).map((int: string, j: number) => (
+                  <span key={j} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">{int}</span>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Loading */}
-          {loading && (
-            <div className="card" style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:400 }}>
-              <div style={{ width:40, height:40, border:'3px solid rgba(108,71,255,.2)', borderTopColor:'#6c47ff', borderRadius:'50%', animation:'spin 0.7s linear infinite', marginBottom:16 }}/>
-              <p style={{ color:'#9090b8', fontSize:13 }}>AI is writing your content…</p>
+          {seg.message && (
+            <div className="bg-purple-900/30 border border-purple-600/30 rounded-lg p-2">
+              <p className="text-xs text-purple-400">💬 Ad Message</p>
+              <p className="text-gray-200 text-xs mt-1">{seg.message}</p>
             </div>
           )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ResultRenderer({ tool, data }: { tool: string; data: any }) {
+  if (!data) return null;
+
+  switch (tool) {
+    case 'ad-copy': return <AdCopyResult data={data} />;
+    case 'headlines': return <HeadlinesResult data={data} />;
+    case 'social-post': return <SocialPostResult data={data} />;
+    case 'article': return <ArticleResult data={data} />;
+    case 'reel-script': return <ReelScriptResult data={data} />;
+    case 'hashtags': return <HashtagsResult data={data} />;
+    case 'captions': return <CaptionsResult data={data} />;
+    case 'audience-ai': return <AudienceResult data={data} />;
+    default:
+      return (
+        <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <pre className="text-gray-200 text-xs whitespace-pre-wrap">{flattenToText(data)}</pre>
+        </div>
+      );
+  }
+}
+
+// ─── MAIN PAGE ────────────────────────────────────────────────
+export default function AIGeneratorPage() {
+  const [selectedTool, setSelectedTool] = useState('ad-copy');
+  const [business, setBusiness] = useState('');
+  const [platform, setPlatform] = useState('Instagram');
+  const [tone, setTone] = useState('Professional');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [isDemo, setIsDemo] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleGenerate() {
+    if (!business.trim()) {
+      setError('Please enter your product or business description.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tool: selectedTool, business: business.trim(), platform, tone })
+      });
+
+      const json = await res.json();
+
+      if (json?.result) {
+        setResult(json.result);
+        setIsDemo(json.demo === true);
+      } else {
+        setError('No content returned. Please try again.');
+      }
+    } catch (err: any) {
+      setError('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const activeTool = TOOLS.find(t => t.id === selectedTool);
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">🤖 AI Content Generator</h1>
+        <p className="text-gray-400 text-sm mt-1">Powered by AI · Type your business → get ready-to-publish content instantly</p>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* LEFT — Input Panel */}
+        <div className="space-y-5">
+          {/* Tool Selector */}
+          <div>
+            <label className="text-sm text-gray-400 mb-2 block">CONTENT TYPE</label>
+            <div className="grid grid-cols-2 gap-2">
+              {TOOLS.map(tool => (
+                <button
+                  key={tool.id}
+                  onClick={() => { setSelectedTool(tool.id); setResult(null); setError(''); }}
+                  className={`text-left p-3 rounded-xl border transition-all ${
+                    selectedTool === tool.id
+                      ? 'border-purple-500 bg-purple-900/30'
+                      : 'border-gray-700 bg-gray-900 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{tool.icon}</div>
+                  <div className="text-sm font-semibold text-white">{tool.label}</div>
+                  <div className="text-xs text-gray-400">{tool.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Business Input */}
+          <div>
+            <label className="text-sm text-gray-400 mb-2 block">Product / Business *</label>
+            <textarea
+              value={business}
+              onChange={e => setBusiness(e.target.value)}
+              placeholder="e.g. Best dental hospital in Indore, create content for LinkedIn and Facebook with image to get more engagement"
+              rows={4}
+              className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+            />
+          </div>
+
+          {/* Platform & Tone */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">Platform</label>
+              <select
+                value={platform}
+                onChange={e => setPlatform(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
+              >
+                {PLATFORMS.map(p => <option key={p}>{p}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm text-gray-400 mb-2 block">Tone</label>
+              <select
+                value={tone}
+                onChange={e => setTone(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
+              >
+                {TONES.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+          </div>
 
           {/* Error */}
           {error && (
-            <div className="card" style={{ textAlign:'center', padding:40 }}>
-              <div style={{ fontSize:32, marginBottom:12 }}>⚠️</div>
-              <div style={{ color:'#ff4757', fontSize:14 }}>{error}</div>
-              <button onClick={generate} className="btn btn-secondary" style={{ marginTop:16 }}>Try Again</button>
+            <div className="bg-red-900/30 border border-red-600/40 rounded-xl p-3">
+              <p className="text-red-400 text-sm">{error}</p>
             </div>
           )}
 
-          {/* Results */}
-          {result && !loading && d && (
-            <div className="fade-in">
-              {result.demo && (
-                <div style={{ padding:'8px 14px', background:'rgba(255,211,42,.08)', border:'1px solid rgba(255,211,42,.2)', borderRadius:10, marginBottom:12, fontSize:12, color:'#ffd32a' }}>
-                  ⚠️ Demo content based on your input · Add OpenRouter key in Settings → API Keys for real AI
-                </div>
-              )}
+          {/* Generate Button */}
+          <button
+            onClick={handleGenerate}
+            disabled={loading}
+            className={`w-full py-3.5 rounded-xl font-bold text-base transition-all ${
+              loading
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg shadow-purple-900/30'
+            }`}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                Generating {activeTool?.label}...
+              </span>
+            ) : (
+              `⚡ Generate ${activeTool?.label}`
+            )}
+          </button>
 
-              {/* ── AD COPY ── */}
-              {tool==='adcopy' && Array.isArray(d) && d.map((ad:any, i:number) => (
-                <div key={i} className="card" style={{ marginBottom:12, borderLeft:`3px solid ${['#6c47ff','#ff4791','#00d4aa'][i]||'#6c47ff'}` }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:11, color:'#9090b8', marginBottom:4 }}>Variation {i+1}</div>
-                      <div style={{ fontSize:15, fontWeight:700, color:'#f0f0ff', marginBottom:6 }}>{ad.headline}</div>
-                    </div>
-                    <div style={{ textAlign:'right', marginLeft:12 }}>
-                      <div style={{ fontSize:22, fontWeight:800, fontFamily:'Syne,sans-serif', color:'#00d4aa' }}>{ad.score}</div>
-                      <div style={{ fontSize:9, color:'#9090b8' }}>Score/100</div>
-                    </div>
-                  </div>
-                  <div style={{ fontSize:13, color:'#9090b8', lineHeight:1.6, marginBottom:10 }}>{ad.description}</div>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                    <div style={{ padding:'3px 10px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:11, color:'#c4b5fd' }}>CTA: {ad.cta}</div>
-                    <button onClick={() => copy(`${ad.headline}\n\n${ad.description}\n\nCTA: ${ad.cta}`, `ad-${i}`)} className="btn btn-secondary btn-sm">
-                      {copied===`ad-${i}` ? '✓ Copied' : '📋 Copy'}
-                    </button>
-                  </div>
-                </div>
-              ))}
+          {/* Feature Pills */}
+          <div className="flex flex-wrap gap-2">
+            {['Works for any niche', '8 content formats', 'Copy in one click', 'Platform-specific'].map(tag => (
+              <span key={tag} className="text-xs bg-gray-800 border border-gray-700 text-gray-400 px-3 py-1 rounded-full">{tag}</span>
+            ))}
+          </div>
+        </div>
 
-              {/* ── HEADLINES ── */}
-              {tool==='headline' && Array.isArray(d) && d.map((h:any, i:number) => (
-                <div key={i} className="card" style={{ marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center', gap:12 }}>
-                  <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14, fontWeight:600, marginBottom:6, color:'#f0f0ff' }}>{h.headline}</div>
-                    <div style={{ padding:'2px 8px', background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.3)', borderRadius:20, fontSize:10, color:'#93c5fd', display:'inline-block' }}>{h.type}</div>
-                  </div>
-                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:6, flexShrink:0 }}>
-                    <div style={{ fontSize:22, fontWeight:800, fontFamily:'Syne,sans-serif', color:'#00d4aa' }}>{h.score}</div>
-                    <button onClick={() => copy(h.headline, `h${i}`)} className="btn btn-secondary btn-sm">{copied===`h${i}`?'✓':'📋'}</button>
-                  </div>
-                </div>
-              ))}
+        {/* RIGHT — Output Panel */}
+        <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 min-h-[400px]">
+          {!result && !loading && (
+            <div className="flex flex-col items-center justify-center h-full text-center py-16">
+              <div className="text-5xl mb-4">🤖</div>
+              <h3 className="text-lg font-bold text-white mb-2">Ready to Generate</h3>
+              <p className="text-gray-400 text-sm max-w-xs">Fill in your product/business details on the left, select a content type, then click Generate.</p>
+            </div>
+          )}
 
-              {/* ── SOCIAL POST ── */}
-              {tool==='post' && d && (
-                <div className="card" style={{ borderLeft:'3px solid #3b82f6' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <h4 style={{ margin:0, fontSize:14, fontWeight:700 }}>📱 Social Post</h4>
-                    <button onClick={() => copy(`${d.caption}\n\n${(d.hashtags||[]).join(' ')}`, 'post')} className="btn btn-secondary btn-sm">{copied==='post'?'✓ Copied':'📋 Copy'}</button>
-                  </div>
-                  {d.hook && <div style={{ padding:'8px 12px', background:'rgba(59,130,246,.1)', border:'1px solid rgba(59,130,246,.2)', borderRadius:8, fontSize:12, color:'#93c5fd', marginBottom:10 }}>🎣 Hook: {d.hook}</div>}
-                  <div style={{ background:'rgba(255,255,255,.04)', borderRadius:10, padding:'12px 14px', fontSize:13, color:'#f0f0ff', lineHeight:1.75, whiteSpace:'pre-wrap', marginBottom:12 }}>
-                    {d.caption || 'No caption generated'}
-                  </div>
-                  {d.cta && <div style={{ fontSize:12, color:'#00d4aa', marginBottom:10 }}>📢 CTA: {d.cta}</div>}
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                    {(d.hashtags||[]).map((h:string) => (
-                      <div key={h} onClick={() => copy(h,h)} style={{ cursor:'pointer', padding:'2px 8px', background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.3)', borderRadius:20, fontSize:10, color:'#93c5fd' }}>{h}</div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {loading && (
+            <div className="flex flex-col items-center justify-center h-full py-16">
+              <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-4" />
+              <p className="text-gray-400 text-sm">AI is crafting your {activeTool?.label}...</p>
+            </div>
+          )}
 
-              {/* ── ARTICLE ── */}
-              {tool==='article' && d && (
-                <div className="card">
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
-                    <div>
-                      <h4 style={{ margin:'0 0 6px', fontSize:15, fontWeight:700, color:'#f0f0ff' }}>{d.title}</h4>
-                      <div style={{ display:'flex', gap:8 }}>
-                        <div style={{ padding:'2px 8px', background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.3)', borderRadius:20, fontSize:10, color:'#93c5fd' }}>{d.wordCount||600} words</div>
-                        <div style={{ padding:'2px 8px', background:'rgba(0,212,170,.15)', border:'1px solid rgba(0,212,170,.3)', borderRadius:20, fontSize:10, color:'#00d4aa' }}>{d.readTime||'3 min'} read</div>
-                      </div>
-                    </div>
-                    <button onClick={() => copy([d.title, d.intro, ...(d.sections||[]).map((s:any)=>`${s.heading}\n\n${s.content}`), d.conclusion].join('\n\n'), 'art')} className="btn btn-secondary btn-sm">
-                      {copied==='art'?'✓ Copied':'📋 Copy All'}
-                    </button>
-                  </div>
-                  <div style={{ fontSize:13, color:'#9090b8', lineHeight:1.65, marginBottom:12 }}>
-                    <strong style={{ color:'#f0f0ff' }}>Intro: </strong>{d.intro}
-                  </div>
-                  {(d.sections||[]).map((s:any, i:number) => (
-                    <div key={i} style={{ marginBottom:12, paddingLeft:12, borderLeft:'2px solid #6c47ff' }}>
-                      <div style={{ fontSize:13, fontWeight:700, marginBottom:4, color:'#f0f0ff' }}>{s.heading}</div>
-                      <div style={{ fontSize:12, color:'#9090b8', lineHeight:1.65 }}>{s.content}</div>
-                    </div>
-                  ))}
-                  <div style={{ fontSize:12, color:'#9090b8', lineHeight:1.65 }}>
-                    <strong style={{ color:'#f0f0ff' }}>Conclusion: </strong>{d.conclusion}
-                  </div>
-                  {(d.hashtags||[]).length > 0 && (
-                    <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:12 }}>
-                      {d.hashtags.map((h:string) => <div key={h} style={{ padding:'2px 8px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:10, color:'#c4b5fd' }}>{h}</div>)}
-                    </div>
+          {result && !loading && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-lg font-bold">{activeTool?.icon} {activeTool?.label}</h2>
+                  {isDemo && (
+                    <span className="text-xs text-yellow-400 bg-yellow-900/30 border border-yellow-600/30 px-2 py-0.5 rounded-full">
+                      Demo mode — AI response unavailable
+                    </span>
                   )}
                 </div>
-              )}
-
-              {/* ── REEL SCRIPT ── */}
-              {tool==='reel' && d && (
-                <div className="card">
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-                    <h4 style={{ margin:0, fontSize:14, fontWeight:700 }}>🎬 Reel Script</h4>
-                    <div style={{ display:'flex', gap:8 }}>
-                      <div style={{ padding:'2px 8px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:10, color:'#c4b5fd' }}>{d.duration||'45s'}</div>
-                      <div style={{ padding:'2px 8px', background:'rgba(59,130,246,.15)', border:'1px solid rgba(59,130,246,.3)', borderRadius:20, fontSize:10, color:'#93c5fd' }}>🎵 {d.musicMood||'upbeat'}</div>
-                    </div>
-                  </div>
-                  <div style={{ marginBottom:12 }}>
-                    <div style={{ fontSize:10, fontWeight:700, color:'#ff4791', letterSpacing:1, marginBottom:6 }}>🎣 HOOK (First 3 seconds)</div>
-                    <div style={{ background:'rgba(255,71,145,.08)', border:'1px solid rgba(255,71,145,.25)', borderRadius:10, padding:'12px 14px', fontSize:15, fontWeight:700, color:'#f0f0ff' }}>{d.hook}</div>
-                  </div>
-                  <div style={{ marginBottom:12 }}>
-                    <div style={{ fontSize:10, fontWeight:700, color:'#6c47ff', letterSpacing:1, marginBottom:6 }}>🎙️ VOICEOVER</div>
-                    <div style={{ background:'rgba(255,255,255,.04)', borderRadius:10, padding:'12px 14px', fontSize:13, color:'#9090b8', lineHeight:1.65 }}>{d.voiceover}</div>
-                  </div>
-                  {(d.onScreenText||[]).length > 0 && (
-                    <div style={{ marginBottom:12 }}>
-                      <div style={{ fontSize:10, fontWeight:700, color:'#00d4aa', letterSpacing:1, marginBottom:8 }}>📱 ON-SCREEN TEXT</div>
-                      {d.onScreenText.map((t:string, i:number) => (
-                        <div key={i} style={{ display:'flex', gap:10, marginBottom:6, alignItems:'flex-start' }}>
-                          <div style={{ width:22, height:22, borderRadius:6, background:'rgba(0,212,170,.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:'#00d4aa', flexShrink:0 }}>{i+1}</div>
-                          <div style={{ fontSize:12, color:'#9090b8', paddingTop:3 }}>{t}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div style={{ padding:'8px 12px', background:'rgba(0,212,170,.08)', border:'1px solid rgba(0,212,170,.2)', borderRadius:8, fontSize:12, color:'#00d4aa', marginBottom:12 }}>
-                    📢 CTA: {d.cta}
-                  </div>
-                  <button onClick={() => copy(`HOOK:\n${d.hook}\n\nVOICEOVER:\n${d.voiceover}\n\nON-SCREEN TEXT:\n${(d.onScreenText||[]).join('\n')}\n\nCTA: ${d.cta}`, 'reel')} className="btn btn-secondary btn-sm">
-                    {copied==='reel'?'✓ Script Copied':'📋 Copy Full Script'}
-                  </button>
-                </div>
-              )}
-
-              {/* ── HASHTAGS ── */}
-              {tool==='hashtags' && d && (
-                <div className="card">
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <h4 style={{ margin:0, fontSize:14, fontWeight:700 }}>#️⃣ {(d.hashtags||[]).length} AI Hashtags</h4>
-                    <button onClick={() => copy((d.hashtags||[]).join(' '), 'hash')} className="btn btn-secondary btn-sm">{copied==='hash'?'✓ Copied':'📋 Copy All'}</button>
-                  </div>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:7, marginBottom:12 }}>
-                    {(d.hashtags||[]).map((h:string) => (
-                      <div key={h} onClick={() => copy(h,h)} style={{ cursor:'pointer', padding:'4px 12px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:11, color:'#c4b5fd', transition:'all .15s' }}>{h}</div>
-                    ))}
-                  </div>
-                  {d.strategy && <div style={{ padding:'10px 14px', background:'rgba(108,71,255,.06)', borderRadius:10, fontSize:12, color:'#9090b8', lineHeight:1.6 }}>💡 Strategy: {d.strategy}</div>}
-                </div>
-              )}
-
-              {/* ── CAPTIONS ── */}
-              {tool==='caption' && Array.isArray(d) && d.map((c:any, i:number) => (
-                <div key={i} className="card" style={{ marginBottom:12, borderLeft:'3px solid #a855f7' }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
-                    <div style={{ padding:'3px 10px', background:'rgba(168,85,247,.15)', border:'1px solid rgba(168,85,247,.3)', borderRadius:20, fontSize:11, color:'#d8b4fe', fontWeight:600 }}>
-                      {c.tone || `Version ${i+1}`}
-                    </div>
-                    <button onClick={() => copy(c.caption, `cap${i}`)} className="btn btn-secondary btn-sm">{copied===`cap${i}`?'✓ Copied':'📋 Copy'}</button>
-                  </div>
-                  <div style={{ fontSize:13, color:'#f0f0ff', lineHeight:1.75, whiteSpace:'pre-wrap' }}>{c.caption}</div>
-                </div>
-              ))}
-
-              {/* ── AUDIENCE ── */}
-              {tool==='audience' && Array.isArray(d) && d.map((seg:any, i:number) => (
-                <div key={i} className="card" style={{ marginBottom:12 }}>
-                  <div style={{ fontSize:14, fontWeight:700, marginBottom:10, color:'#f0f0ff' }}>
-                    {['🥇','🥈','🥉'][i]} {seg.segment}
-                  </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
-                    {[['Age',seg.age],['Gender',seg.gender],['Est. Size',seg.size],['Est. CPL',seg.cpl]].map(([k,v]) => (
-                      <div key={String(k)} style={{ background:'rgba(255,255,255,.04)', borderRadius:8, padding:'8px 10px' }}>
-                        <div style={{ fontSize:10, color:'#5a5a80', marginBottom:2 }}>{k}</div>
-                        <div style={{ fontSize:12, fontWeight:600, color:'#f0f0ff' }}>{v}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ fontSize:11, color:'#9090b8', marginBottom:8 }}>📍 {seg.locations}</div>
-                  <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
-                    {(seg.interests||[]).map((int:string) => (
-                      <div key={int} style={{ padding:'2px 8px', background:'rgba(108,71,255,.15)', border:'1px solid rgba(108,71,255,.3)', borderRadius:20, fontSize:10, color:'#c4b5fd' }}>{int}</div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-
+                <button
+                  onClick={() => { setResult(null); setError(''); }}
+                  className="text-xs text-gray-500 hover:text-white"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+              <div className="overflow-y-auto max-h-[70vh] pr-1 custom-scroll">
+                <ResultRenderer tool={selectedTool} data={result} />
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
-  )
+  );
 }
