@@ -1,37 +1,160 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const DEMO: Record<string, any> = {
-  adcopy: [
-    { headline:"Built for Men Over 40 — Feel the Difference", description:"Your body changes after 40. Our science-backed supplement supports energy, strength & vitality — naturally. Trusted by 10,000+ men across India.", cta:"Shop Now", score:94 },
-    { headline:"Why Men Over 40 Are Switching to This", description:"Clinically tested formula with Zinc, Magnesium & Ashwagandha. 67% reported more energy within 2 weeks. 100% natural, zero side effects.", cta:"Try Free", score:91 },
-    { headline:"Stop Aging. Start Thriving.", description:"Designed specifically for men 40+. Supports testosterone, stamina & mental clarity. Join 10,000+ men who refused to let age slow them down.", cta:"Learn More", score:88 },
-  ],
-  headline: [
-    { headline:"Built for Men Over 40 — Feel the Difference", type:"benefit", score:94 },
-    { headline:"Why Are Thousands of Men Over 40 Switching?", type:"curiosity", score:91 },
-    { headline:"Stop Feeling Tired — Natural Energy for Men 40+", type:"problem-solution", score:89 },
-    { headline:"Science-Backed Supplement for Men Over 40", type:"authority", score:86 },
-    { headline:"Last Chance: 20% Off Men's Health Supplement", type:"urgency", score:84 },
-  ],
-  post: { caption:"Are you over 40 and tired of feeling tired?\n\nYour energy should not decline just because your age is climbing. Our science-backed supplement is specifically formulated for men over 40.\n\n✅ 100% Natural Ingredients\n✅ Clinically tested formula\n✅ 10,000+ men already switched\n\nDon't just age — thrive. 💪", hook:"Are you over 40 and tired of feeling tired?", cta:"Shop Now", hashtags:["#MensHealth","#Over40","#EnergyBoost","#NaturalHealth"], charCount:380 },
-  article: { title:"The Science of Male Vitality After 40", intro:"After 40, the male body undergoes significant hormonal and physiological changes. Understanding these changes is the first step to optimising your health.", sections:[{heading:"How Testosterone Affects Energy After 40",content:"Testosterone levels naturally decline by about 1-2% per year after age 30. This impacts energy levels, muscle mass, mental clarity, and overall vitality."},{heading:"The 5 Key Nutrients Men Over 40 Need",content:"Clinical research points to five essential nutrients: Zinc, Magnesium, Vitamin D3, Ashwagandha, and Tribulus Terrestris."},{heading:"Real Results from Real Men",content:"In a 12-week study, participants reported 67% improvement in energy levels and 54% increase in physical endurance."}], conclusion:"Taking control of your health after 40 is essential. With the right nutritional support, you can feel better at 45 than you did at 35.", hashtags:["#MensHealth","#Science","#Vitality","#Over40"], wordCount:720, readTime:"4 min" },
-  reel: { hook:"Stop aging. Start thriving. 🔥", voiceover:"Did you know that after 40, your testosterone drops 1-2% every single year? Our supplement supports energy, strength, and vitality using clinically proven ingredients.", onScreenText:["Your energy is dropping 2% every year ⚡","Here is what is really happening to your body","The natural solution that actually works ✅","10,000+ men already transformed their health 💪"], cta:"Link in bio — Try free for 7 days", duration:"45s", hashtags:["#MenOver40","#EnergyBoost","#Testosterone","#NaturalHealth","#Reels"], musicMood:"upbeat motivational" },
-  hashtags: { hashtags:["#MensHealth","#Over40","#HealthSupplement","#EnergyBoost","#NaturalHealth","#Testosterone","#FitAt40","#Wellness","#Stamina","#HealthyLiving","#Supplements","#MenOver40","#Vitality","#StayStrong","#HealthyMen","#NaturalWellness","#PowerUp","#AgingGracefully","#HealthFirst","#MensWellness"], strategy:"Mix of high-volume and niche hashtags for maximum reach and targeting precision." },
-  caption: [
-    { caption:"🔥 40 is not the end — it is the beginning.\n\nOur science-backed supplement gives men over 40 the energy, strength and stamina they had in their 30s. 100% natural. Zero side effects. Trusted by 10,000+ men.\n\nTap the link in bio to start your free 7-day trial today.", tone:"inspirational" },
-    { caption:"Bro, feeling tired all the time after 40? It is not just age — it is nutrition. 💪\n\nOur formula has Zinc, Magnesium & Ashwagandha — exactly what your body needs to bounce back. Try it free for 7 days.", tone:"casual" },
-  ],
-  audience: [
-    { segment:"Health-Conscious Men 40-55", interests:["Health & Wellness","Fitness","Nutrition","Natural Supplements"], age:"40-55", gender:"Male", size:"Large (2-3M)", cpl:"₹180-280", locations:"Mumbai, Delhi, Bangalore, Hyderabad, Pune" },
-    { segment:"Working Professionals 38-50", interests:["Career Development","Productivity","Health","Self-Improvement"], age:"38-50", gender:"Male", size:"Medium (800K-1.2M)", cpl:"₹220-350", locations:"Tier 1 cities, IT hubs" },
-    { segment:"Fitness Enthusiasts 35-48", interests:["Gym","Bodybuilding","Sports Nutrition","Running"], age:"35-48", gender:"Male", size:"Medium (600K-900K)", cpl:"₹150-240", locations:"Urban India, metro cities" },
-  ],
+// ── Demo fallback generator — creates relevant content for ANY business ──────
+// This runs when AI API is unavailable. Uses the actual product name.
+function buildDemo(type: string, product: string, platform: string, tone: string, cta: string): any {
+  const p = product || 'Your Business'
+  const shortP = p.slice(0, 40)
+
+  const demos: Record<string, any> = {
+    adcopy: [
+      {
+        headline: `${shortP} — The Smart Choice`,
+        description: `Looking for the best in ${shortP}? We deliver quality, reliability and results. Join thousands of satisfied customers who made the switch. Limited time offer available now.`,
+        cta: cta || 'Learn More',
+        score: 91,
+      },
+      {
+        headline: `Why Smart People Choose ${shortP}`,
+        description: `Don't settle for less. ${shortP} gives you everything you need — quality, value, and results you can count on. Trusted by customers across India.`,
+        cta: cta || 'Get Started',
+        score: 88,
+      },
+      {
+        headline: `${shortP} — Results That Speak`,
+        description: `Experience the difference with ${shortP}. Our customers see real results within weeks. 100% satisfaction guaranteed. Start your journey today.`,
+        cta: cta || cta || 'Book Now',
+        score: 85,
+      },
+    ],
+
+    headline: [
+      { headline: `${shortP} — The Smart Choice for You`, type: 'benefit', score: 94 },
+      { headline: `Why Thousands Trust ${shortP}`, type: 'authority', score: 91 },
+      { headline: `Discover What ${shortP} Can Do for You`, type: 'curiosity', score: 88 },
+      { headline: `${shortP} — Results Guaranteed`, type: 'proof', score: 85 },
+      { headline: `Limited Time: Get Started with ${shortP} Today`, type: 'urgency', score: 82 },
+    ],
+
+    post: {
+      caption: `🚀 Excited to share something special!\n\n${p} is here to make a difference. Whether you're looking for quality, value, or results — we've got you covered.\n\n✅ Trusted by thousands\n✅ Results you can see\n✅ 100% commitment to excellence\n\nReady to experience the difference? Drop a comment or DM us! 👇`,
+      hook: `🚀 Something exciting is here!`,
+      cta: cta || 'DM us now',
+      hashtags: [`#${shortP.replace(/\s+/g,'').slice(0,20)}`, '#Business', '#Quality', '#Results', '#India', '#Growth'],
+      charCount: 320,
+    },
+
+    article: {
+      title: `Everything You Need to Know About ${p}`,
+      intro: `In today's competitive world, finding the right solution matters more than ever. ${p} has been designed with one goal in mind — delivering real value to real people. Here's why it stands out.`,
+      sections: [
+        {
+          heading: `What Makes ${shortP} Different`,
+          content: `Unlike other options in the market, ${p} focuses on what truly matters to customers — quality, consistency, and genuine results. Every aspect has been carefully considered to ensure the best possible experience.`,
+        },
+        {
+          heading: `Real Results from Real Customers`,
+          content: `Customers across India have been choosing ${p} and seeing measurable differences in their outcomes. From small businesses to large enterprises, the impact has been consistent and verifiable.`,
+        },
+        {
+          heading: `How to Get Started with ${shortP}`,
+          content: `Getting started is simple. Reach out to our team, explain your needs, and we'll guide you through the entire process. Our onboarding is smooth, fast, and designed to get you results quickly.`,
+        },
+      ],
+      conclusion: `${p} represents a genuine opportunity to achieve better outcomes. Whether you're just starting out or looking to improve, now is the right time to make the move.`,
+      hashtags: [`#${shortP.replace(/\s+/g,'').slice(0,20)}`, '#Business', '#India', '#Growth', '#Results'],
+      wordCount: 580,
+      readTime: '3 min',
+    },
+
+    reel: {
+      hook: `Did you know most people are missing out on ${shortP}? 🤯`,
+      voiceover: `Here's the truth — ${p} is changing the game for thousands of people across India. While everyone else is struggling with old solutions, smart people are already making the switch. The results speak for themselves. Don't be the last one to find out.`,
+      onScreenText: [
+        `Most people don't know about this... 👀`,
+        `${shortP} is changing everything 🚀`,
+        `Here's why thousands are switching ✅`,
+        `Don't miss out — act now! 🔥`,
+      ],
+      cta: cta || 'Link in bio — Find out more',
+      duration: '45s',
+      hashtags: [`#${shortP.replace(/\s+/g,'').slice(0,20)}`, '#Trending', '#MustWatch', '#India'],
+      musicMood: 'upbeat trending',
+    },
+
+    hashtags: {
+      hashtags: [
+        `#${shortP.replace(/\s+/g,'').slice(0,20)}`,
+        '#Business',
+        '#India',
+        '#Growth',
+        '#Marketing',
+        '#Success',
+        '#Entrepreneur',
+        '#Startup',
+        '#Quality',
+        '#Results',
+        '#Innovation',
+        '#SmallBusiness',
+        '#IndiaDigital',
+        '#MakeInIndia',
+        '#BusinessGrowth',
+        '#CustomerFirst',
+        '#Excellence',
+        '#TrustWorthiness',
+        '#BestInClass',
+        '#YourBrand',
+      ],
+      strategy: `Mix of brand-specific, industry, and broad reach hashtags for ${platform} to maximise visibility and engagement.`,
+    },
+
+    caption: [
+      {
+        caption: `Proud to introduce ${p} to the world! 🌟\n\nWe've built something truly special — focused on delivering real value, real results, and real satisfaction. Our customers are at the heart of everything we do.\n\nExplore what we offer and join our growing community today. ${cta || 'Link in bio'} ✨`,
+        tone: 'professional',
+      },
+      {
+        caption: `Okay so we need to talk about ${p} 👀\n\nBecause honestly? It's been a game-changer for so many people and we're just getting started 🚀\n\nDrop a ❤️ if you want to know more or DM us right now!`,
+        tone: 'casual',
+      },
+    ],
+
+    audience: [
+      {
+        segment: `Primary Target — Core ${shortP} Customers`,
+        interests: ['Quality Products', 'Value for Money', 'Trusted Brands', platform === 'linkedin' ? 'Business Growth' : 'Lifestyle'],
+        age: '25-45',
+        gender: 'All',
+        size: 'Large (2-5M)',
+        cpl: '₹150-300',
+        locations: 'Mumbai, Delhi, Bangalore, Hyderabad, Pune, Chennai',
+      },
+      {
+        segment: `Secondary Target — Aspirational ${shortP} Buyers`,
+        interests: ['Self-Improvement', 'Research-Oriented', 'Reviews & Comparisons', 'Best Value'],
+        age: '22-38',
+        gender: 'All',
+        size: 'Medium (1-2M)',
+        cpl: '₹200-400',
+        locations: 'Tier 1 & Tier 2 cities',
+      },
+      {
+        segment: `Retargeting — Warm ${shortP} Audience`,
+        interests: ['Previously Engaged', 'Comparison Shopping', 'Deal Seekers'],
+        age: '28-50',
+        gender: 'All',
+        size: 'Small (200K-500K)',
+        cpl: '₹80-180',
+        locations: 'Pan India — urban areas',
+      },
+    ],
+  }
+
+  return demos[type] || demos.adcopy
 }
 
 // ── OpenRouter API call ───────────────────────────────────────
 async function callOpenRouter(prompt: string, apiKey: string): Promise<string> {
-  // Try multiple free models
-  // Updated May 2026 — use openrouter/free router which auto-selects best available free model
   const models = [
     'openrouter/free',
     'deepseek/deepseek-chat:free',
@@ -56,9 +179,9 @@ async function callOpenRouter(prompt: string, apiKey: string): Promise<string> {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert marketing copywriter. Always respond with valid JSON only. No markdown, no explanation, just the JSON object or array.'
+              content: 'You are an expert marketing copywriter. Always respond with valid JSON only. No markdown, no explanation, just the JSON.',
             },
-            { role: 'user', content: prompt }
+            { role: 'user', content: prompt },
           ],
           max_tokens: 1500,
           temperature: 0.7,
@@ -66,48 +189,45 @@ async function callOpenRouter(prompt: string, apiKey: string): Promise<string> {
       })
 
       const data = await res.json()
-
-      if (data.error) {
-        lastError = data.error.message || JSON.stringify(data.error)
-        continue
-      }
-
+      if (data.error) { lastError = data.error.message || JSON.stringify(data.error); continue }
       const text = data.choices?.[0]?.message?.content || ''
       if (text && text.length > 10) return text
-
     } catch (e: any) {
       lastError = e.message
       continue
     }
   }
-  throw new Error(`All OpenRouter models failed: ${lastError}`)
+  throw new Error(`OpenRouter failed: ${lastError}`)
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const type     = String(body.type     || 'adcopy')
-    const product  = String(body.product  || '')
-    const platform = String(body.platform || 'meta')
-    const tone     = String(body.tone     || 'professional')
-    const cta      = String(body.cta      || 'Learn More')
+    const body       = await req.json()
+    const type       = String(body.type     || 'adcopy')
+    const product    = String(body.product  || '')
+    const platform   = String(body.platform || 'meta')
+    const tone       = String(body.tone     || 'professional')
+    const cta        = String(body.cta      || 'Learn More')
 
-    // Get API key - check env first, then fallback
     const openRouterKey = process.env.OPENROUTER_API_KEY || ''
     const anthropicKey  = process.env.ANTHROPIC_API_KEY  || ''
-
     const hasOpenRouter = openRouterKey.length > 20 && !openRouterKey.includes('your_key')
     const hasAnthropic  = anthropicKey.length  > 20 && !anthropicKey.includes('your_key')
 
+    // No key — return smart demo based on actual product name
     if (!hasOpenRouter && !hasAnthropic) {
-      return NextResponse.json({ success: true, data: DEMO[type] || DEMO.adcopy, demo: true })
+      return NextResponse.json({
+        success: true,
+        data: buildDemo(type, product, platform, tone, cta),
+        demo: true,
+      })
     }
 
     const prompts: Record<string, string> = {
-      adcopy:   `Generate 3 high-converting ${platform} ad copies for: "${product}". Tone: ${tone}. CTA: ${cta}. Return ONLY a JSON array: [{"headline":"...","description":"...","cta":"...","score":85}]`,
+      adcopy:   `Generate 3 high-converting ${platform} ad copies for: "${product}". Tone: ${tone}. CTA: "${cta}". Return ONLY a JSON array: [{"headline":"...","description":"...","cta":"...","score":85}]`,
       headline: `Write 5 powerful marketing headlines for: "${product}". Return ONLY a JSON array: [{"headline":"...","type":"benefit","score":90}]`,
-      post:     `Write an engaging ${platform} social media post for: "${product}". Tone: ${tone}. Include emojis. Return ONLY JSON: {"caption":"...","hook":"...","cta":"...","hashtags":["#tag1","#tag2"],"charCount":300}`,
-      article:  `Write a 700-word article about: "${product}". Return ONLY JSON: {"title":"...","intro":"...","sections":[{"heading":"...","content":"..."},{"heading":"...","content":"..."},{"heading":"...","content":"..."}],"conclusion":"...","hashtags":["#tag"],"wordCount":600,"readTime":"3 min"}`,
+      post:     `Write an engaging ${platform} post for: "${product}". Tone: ${tone}. Include emojis. Return ONLY JSON: {"caption":"...","hook":"...","cta":"...","hashtags":["#tag"],"charCount":300}`,
+      article:  `Write a 600-word article about: "${product}". Return ONLY JSON: {"title":"...","intro":"...","sections":[{"heading":"...","content":"..."},{"heading":"...","content":"..."},{"heading":"...","content":"..."}],"conclusion":"...","hashtags":["#tag"],"wordCount":600,"readTime":"3 min"}`,
       reel:     `Write a 45-second viral reel script for: "${product}". Return ONLY JSON: {"hook":"...","voiceover":"...","onScreenText":["...","...","...","..."],"cta":"...","duration":"45s","hashtags":["#tag"],"musicMood":"upbeat"}`,
       hashtags: `Generate 20 powerful hashtags for "${product}" on ${platform}. Return ONLY JSON: {"hashtags":["#tag1","#tag2"],"strategy":"brief explanation"}`,
       caption:  `Write 2 social media captions for "${product}" on ${platform}. Tone: ${tone}. Include emojis. Return ONLY JSON array: [{"caption":"...","tone":"professional"},{"caption":"...","tone":"casual"}]`,
@@ -116,11 +236,9 @@ export async function POST(req: NextRequest) {
 
     const prompt = prompts[type] || prompts.adcopy
     let rawText = ''
-    let usedDemo = false
 
     try {
       if (hasAnthropic) {
-        // Try Anthropic
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: { 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
@@ -129,43 +247,37 @@ export async function POST(req: NextRequest) {
         const d = await res.json()
         rawText = d.content?.[0]?.text || ''
       }
-
       if (!rawText && hasOpenRouter) {
         rawText = await callOpenRouter(prompt, openRouterKey)
       }
     } catch (e: any) {
-      console.error('AI call failed:', e.message)
-      usedDemo = true
+      console.error('AI failed:', e.message)
     }
 
+    // If AI call failed — return smart demo with actual product name
     if (!rawText) {
-      usedDemo = true
+      return NextResponse.json({
+        success: true,
+        data: buildDemo(type, product, platform, tone, cta),
+        demo: true,
+      })
     }
 
-    if (usedDemo || !rawText) {
-      return NextResponse.json({ success: true, data: DEMO[type] || DEMO.adcopy, demo: true })
+    // Clean and parse JSON
+    const clean = rawText.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim()
+    const start = clean.indexOf('[') !== -1 && (clean.indexOf('{') === -1 || clean.indexOf('[') < clean.indexOf('{'))
+      ? clean.indexOf('[') : clean.indexOf('{')
+    const end = clean.lastIndexOf(']') !== -1 && clean.lastIndexOf(']') > clean.lastIndexOf('}')
+      ? clean.lastIndexOf(']') + 1 : clean.lastIndexOf('}') + 1
+
+    if (start === -1 || end === 0) {
+      return NextResponse.json({ success: true, data: buildDemo(type, product, platform, tone, cta), demo: true })
     }
 
-    // Parse JSON response
-    const clean = rawText
-      .replace(/```json\n?/g, '')
-      .replace(/```\n?/g, '')
-      .replace(/[\x00-\x1F\x7F]/g, ' ')
-      .trim()
-
-    // Find JSON in response
-    const jsonStart = clean.indexOf('[') !== -1 ? clean.indexOf('[') : clean.indexOf('{')
-    const jsonEnd   = clean.lastIndexOf(']') !== -1 ? clean.lastIndexOf(']') + 1 : clean.lastIndexOf('}') + 1
-
-    if (jsonStart === -1 || jsonEnd === 0) {
-      return NextResponse.json({ success: true, data: DEMO[type] || DEMO.adcopy, demo: true })
-    }
-
-    const jsonStr = clean.slice(jsonStart, jsonEnd)
-    const data = JSON.parse(jsonStr)
-
+    const data = JSON.parse(clean.slice(start, end))
     return NextResponse.json({ success: true, data, demo: false })
 
-  } catch (e: any) {   return NextResponse.json({ success: true, data: DEMO['adcopy'], demo: true })
+  } catch {
+    return NextResponse.json({ success: true, data: buildDemo('adcopy', '', 'meta', 'professional', 'Learn More'), demo: true })
   }
 }
