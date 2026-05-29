@@ -615,6 +615,10 @@ Return ONLY valid JSON:
 Return ONLY valid JSON:
 {"instagram":{"caption":"full caption with emojis","length":"Medium"},"facebook":{"caption":"full caption","length":"Long"}}`,
 
+    'landing-page': `You are a web design expert. Generate a complete landing page data for: "\${business}"
+Return ONLY valid JSON (no markdown):
+{"businessName":"...","tagline":"compelling headline","description":"2-3 sentence description","phone":"+91 98765 43210","email":"info@business.com","address":"City, State","ctaText":"Book Free Consultation","ctaSecondary":"Learn More","offer":"Special offer text with emoji","badge":"Trust badge with emoji","primaryColor":"#hex","secondaryColor":"#hex","bgColor":"#hex","textColor":"#hex","fontStyle":"modern","features":[{"icon":"emoji","title":"...","desc":"..."},{"icon":"emoji","title":"...","desc":"..."},{"icon":"emoji","title":"...","desc":"..."},{"icon":"emoji","title":"...","desc":"..."}],"testimonials":[{"name":"Indian name","role":"City","text":"review","rating":5},{"name":"Indian name","role":"City","text":"review","rating":5},{"name":"Indian name","role":"City","text":"review","rating":5}],"faqs":[{"q":"question","a":"answer"},{"q":"question","a":"answer"},{"q":"question","a":"answer"},{"q":"question","a":"answer"}]}`,
+
     'audience-ai': `You are a digital marketing strategist in India. Identify 3 specific target audience segments for: "${business}" in Indore.
 Be very specific to this business type — think about who actually needs this product/service, their real pain points, and what ad message would convert them.
 Return ONLY valid JSON:
