@@ -87,6 +87,8 @@ export default function WhatsAppPage() {
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [broadcastSent, setBroadcastSent] = useState(false);
   const [filter, setFilter] = useState<'all' | 'lead' | 'client' | 'prospect' | 'vip'>('all');
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [newContact, setNewContact] = useState({ name: '', phone: '', tag: 'lead' as Contact['tag'] });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -202,7 +204,7 @@ export default function WhatsAppPage() {
           >
             📢 Broadcast
           </button>
-          <button className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
+          <button onClick={() => setShowNewChat(true)} className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded-lg transition-colors">
             ➕ New Chat
           </button>
         </div>
@@ -489,6 +491,92 @@ export default function WhatsAppPage() {
           </div>
         </div>
       )}
+      {/* New Chat Modal */}
+      {showNewChat && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">➕ New Chat</h3>
+              <button onClick={() => { setShowNewChat(false); setNewContact({ name: '', phone: '', tag: 'lead' }); }} className="text-gray-400 hover:text-white">✕</button>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">Add a new contact and start a conversation</p>
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Name *</label>
+                <input
+                  type="text"
+                  value={newContact.name}
+                  onChange={e => setNewContact(p => ({ ...p, name: e.target.value }))}
+                  placeholder="e.g. Amit Sharma"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">WhatsApp Number * (with country code)</label>
+                <input
+                  type="text"
+                  value={newContact.phone}
+                  onChange={e => setNewContact(p => ({ ...p, phone: e.target.value }))}
+                  placeholder="e.g. +91 99811 99648"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-green-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400 mb-1 block">Tag</label>
+                <select
+                  value={newContact.tag}
+                  onChange={e => setNewContact(p => ({ ...p, tag: e.target.value as Contact['tag'] }))}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-green-500"
+                >
+                  <option value="lead">🔵 Lead</option>
+                  <option value="prospect">🟡 Prospect</option>
+                  <option value="client">🟢 Client</option>
+                  <option value="vip">👑 VIP</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowNewChat(false); setNewContact({ name: '', phone: '', tag: 'lead' }); }}
+                className="flex-1 py-2.5 rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!newContact.name.trim() || !newContact.phone.trim()) return;
+                  const initials = newContact.name.trim().split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
+                  const contact: Contact = {
+                    id: Date.now().toString(),
+                    name: newContact.name.trim(),
+                    phone: newContact.phone.trim(),
+                    lastMessage: 'New contact added',
+                    lastTime: 'Just now',
+                    unread: 0,
+                    status: 'offline',
+                    avatar: initials,
+                    tag: newContact.tag
+                  };
+                  setContacts(prev => [contact, ...prev]);
+                  setMessages(prev => ({ ...prev, [contact.id]: [] }));
+                  setSelectedContact(contact);
+                  setShowNewChat(false);
+                  setNewContact({ name: '', phone: '', tag: 'lead' });
+                }}
+                disabled={!newContact.name.trim() || !newContact.phone.trim()}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                  newContact.name.trim() && newContact.phone.trim()
+                    ? 'bg-green-600 hover:bg-green-500 text-white'
+                    : 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Start Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
