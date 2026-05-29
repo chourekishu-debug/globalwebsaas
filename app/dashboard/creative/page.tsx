@@ -99,17 +99,8 @@ function TemplateCard({ template, onUse }: { template: Template; onUse: (t: Temp
   );
 }
 
-// ─── GENERATED IMAGE MOCK ─────────────────────────────────────
-function GeneratedImageMock({ prompt, style, format }: { prompt: string; style: Style; format: Format }) {
-  const gradients: Record<Style, string> = {
-    photorealistic: 'from-blue-900 via-blue-700 to-sky-500',
-    illustration: 'from-purple-900 via-pink-700 to-orange-400',
-    minimalist: 'from-gray-900 via-gray-700 to-gray-500',
-    bold: 'from-red-900 via-orange-600 to-yellow-400',
-    '3d': 'from-indigo-900 via-violet-700 to-purple-400',
-    vintage: 'from-amber-900 via-yellow-700 to-orange-300',
-  };
-
+// ─── REAL AI IMAGE using Pollinations ─────────────────────────
+function GeneratedImage({ prompt, style, format, imageUrl }: { prompt: string; style: Style; format: Format; imageUrl: string }) {
   const aspectRatios: Record<Format, string> = {
     square: 'aspect-square',
     portrait: 'aspect-[4/5]',
@@ -118,18 +109,23 @@ function GeneratedImageMock({ prompt, style, format }: { prompt: string; style: 
   };
 
   return (
-    <div className={`relative w-full ${aspectRatios[format]} max-h-80 rounded-xl overflow-hidden`}>
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradients[style]}`} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-        <div className="text-4xl mb-3">🎨</div>
-        <p className="text-white text-xs font-medium opacity-80 line-clamp-3">{prompt}</p>
-        <div className="mt-3 flex gap-2">
-          <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">{style}</span>
-          <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">{format}</span>
-        </div>
+    <div className={`relative w-full ${aspectRatios[format]} max-h-96 rounded-xl overflow-hidden bg-gray-800`}>
+      <img
+        src={imageUrl}
+        alt={prompt}
+        className="w-full h-full object-cover"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          target.nextElementSibling?.classList.remove('hidden');
+        }}
+      />
+      <div className="hidden absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-gray-800">
+        <div className="text-4xl mb-3">⚠️</div>
+        <p className="text-gray-400 text-sm">Image generation failed. Try again.</p>
       </div>
-      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
-        AI Generated Preview
+      <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full backdrop-blur-sm">
+        ✨ AI Generated
       </div>
     </div>
   );
@@ -144,6 +140,7 @@ export default function CreativeStudioPage() {
   const [platform, setPlatform] = useState('Instagram');
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -159,10 +156,42 @@ export default function CreativeStudioPage() {
     if (!prompt.trim()) return;
     setGenerating(true);
     setGenerated(false);
-    // Simulate generation delay
-    await new Promise(r => setTimeout(r, 2500));
-    setGenerating(false);
-    setGenerated(true);
+    setImageUrl('');
+
+    try {
+      // Build dimensions based on format
+      const dims: Record<Format, { w: number; h: number }> = {
+        square: { w: 1080, h: 1080 },
+        portrait: { w: 1080, h: 1350 },
+        landscape: { w: 1200, h: 628 },
+        story: { w: 1080, h: 1920 },
+      };
+      const { w, h } = dims[selectedFormat];
+
+      // Style modifiers for better results
+      const styleModifiers: Record<Style, string> = {
+        photorealistic: 'photorealistic, professional photography, high quality, 4k',
+        illustration: 'digital illustration, vibrant colors, artistic, vector art style',
+        minimalist: 'minimalist design, clean, simple, white background, elegant',
+        bold: 'bold vibrant colors, high contrast, eye-catching, graphic design',
+        '3d': '3D render, cinema 4d, octane render, realistic lighting, professional',
+        vintage: 'vintage style, retro aesthetic, film grain, nostalgic, warm tones',
+      };
+
+      const fullPrompt = `${prompt}, ${styleModifiers[selectedStyle]}, ${platform} ad, marketing material`;
+      const encodedPrompt = encodeURIComponent(fullPrompt);
+      const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w}&height=${h}&nologo=true&enhance=true`;
+
+      setImageUrl(url);
+      // Give time for image to start loading
+      await new Promise(r => setTimeout(r, 1000));
+      setGenerated(true);
+    } catch (err) {
+      console.error('Image generation error:', err);
+      setGenerated(true);
+    } finally {
+      setGenerating(false);
+    }
   }
 
   function handleUseTemplate(template: Template) {
@@ -347,11 +376,17 @@ export default function CreativeStudioPage() {
                   <h2 className="font-bold text-base">✨ Generated Image</h2>
                   <button onClick={() => { setGenerated(false); setPrompt(''); }} className="text-xs text-gray-500 hover:text-white">✕ Clear</button>
                 </div>
-                <GeneratedImageMock prompt={prompt} style={selectedStyle} format={selectedFormat} />
+                <GeneratedImage prompt={prompt} style={selectedStyle} format={selectedFormat} imageUrl={imageUrl} />
                 <div className="mt-4 grid grid-cols-3 gap-2">
-                  <button className="py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-sm font-medium transition-colors">
+                  <a
+                    href={imageUrl}
+                    download="globalwebsaas-ad.jpg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 rounded-xl bg-green-600 hover:bg-green-500 text-white text-sm font-medium transition-colors text-center"
+                  >
                     ⬇️ Download
-                  </button>
+                  </a>
                   <button className="py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors">
                     📤 Publish
                   </button>
