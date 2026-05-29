@@ -8,6 +8,7 @@ const NAV = [
   { icon:'🤖', label:'AI Generator',   path:'/dashboard/ai' },
   { icon:'📱', label:'Social Media',   path:'/dashboard/social' },
   { icon:'🎨', label:'Creative Studio',path:'/dashboard/creative' },
+  { icon:'🌐', label:'Landing Pages',  path:'/dashboard/landing' },
   { icon:'👥', label:'Lead Manager',   path:'/dashboard/leads' },
   { icon:'📈', label:'Analytics',      path:'/dashboard/analytics' },
   { icon:'💬', label:'WhatsApp',       path:'/dashboard/whatsapp' },
