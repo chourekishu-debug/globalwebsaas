@@ -217,7 +217,7 @@ function LandingPagePreview({ page, scale = 1 }: { page: PageData; scale?: numbe
               {page.description}
             </p>
             {page.offer && (
-              <div style={{ backgroundColor: page.primaryColor + '15', border: `1px dashed ${page.primaryColor}` }} className="inline-block px-6 py-2 rounded-lg mb-6 text-sm font-semibold" style2={{ color: page.primaryColor }}>
+              <div style={{ backgroundColor: page.primaryColor + '15', border: `1px dashed ${page.primaryColor}` }} className="inline-block px-6 py-2 rounded-lg mb-6 text-sm font-semibold" >
                 <span style={{ color: page.primaryColor }}>{page.offer}</span>
               </div>
             )}
