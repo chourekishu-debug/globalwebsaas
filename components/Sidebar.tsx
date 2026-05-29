@@ -8,7 +8,6 @@ const NAV = [
   { icon:'🤖', label:'AI Generator',   path:'/dashboard/ai' },
   { icon:'📱', label:'Social Media',   path:'/dashboard/social' },
   { icon:'🎨', label:'Creative Studio',path:'/dashboard/creative' },
-  { icon:'🌐', label:'Landing Pages',  path:'/dashboard/landing' },
   { icon:'👥', label:'Lead Manager',   path:'/dashboard/leads' },
   { icon:'📈', label:'Analytics',      path:'/dashboard/analytics' },
   { icon:'💬', label:'WhatsApp',       path:'/dashboard/whatsapp' },
@@ -35,9 +34,9 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
       {/* Logo */}
       <div style={{ padding:'20px 16px 14px', borderBottom:'1px solid rgba(255,255,255,.07)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <div style={{ width:36, height:36, borderRadius:10, background:'linear-gradient(135deg,#6c47ff,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>⚡</div>
+          <img src="/globalwebsaas-logo.png" alt="GlobalWebSaaS" style={{ width:40, height:40, objectFit:'contain', flexShrink:0 }} />
           <div>
-            <div style={{ fontFamily:'Syne,sans-serif', fontSize:14, fontWeight:800, color:'#f0f0ff' }}>Global Web AI</div>
+            <div style={{ fontFamily:'Syne,sans-serif', fontSize:13, fontWeight:800, color:'#f0f0ff' }}>GlobalWebSaaS</div>
             <div style={{ fontSize:10, color:'#9090b8' }}>Marketing Automation</div>
           </div>
         </div>
