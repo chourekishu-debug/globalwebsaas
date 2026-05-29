@@ -112,12 +112,13 @@ export default function WhatsAppPage() {
     return matchSearch && matchFilter;
   });
 
-  function sendMessage() {
+  async function sendMessage() {
     if (!inputText.trim() || !selectedContact) return;
 
+    const msgText = inputText.trim();
     const newMsg: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: msgText,
       sender: 'me',
       time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
       status: 'sent'
@@ -128,10 +129,9 @@ export default function WhatsAppPage() {
       [selectedContact.id]: [...(prev[selectedContact.id] || []), newMsg]
     }));
 
-    // Update contact's last message
     setContacts(prev => prev.map(c =>
       c.id === selectedContact.id
-        ? { ...c, lastMessage: inputText.trim(), lastTime: 'Just now', unread: 0 }
+        ? { ...c, lastMessage: msgText, lastTime: 'Just now', unread: 0 }
         : c
     ));
 
@@ -139,15 +139,23 @@ export default function WhatsAppPage() {
     setShowQuickReplies(false);
     inputRef.current?.focus();
 
-    // Simulate delivery status update
-    setTimeout(() => {
+    // Send via real WhatsApp API
+    try {
+      const res = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: selectedContact.phone, message: msgText })
+      });
+      const data = await res.json();
       setMessages(prev => ({
         ...prev,
         [selectedContact.id]: (prev[selectedContact.id] || []).map(m =>
-          m.id === newMsg.id ? { ...m, status: 'delivered' } : m
+          m.id === newMsg.id ? { ...m, status: data.success ? 'delivered' : 'sent' } : m
         )
       }));
-    }, 1000);
+    } catch (err) {
+      console.error('WhatsApp send error:', err);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
