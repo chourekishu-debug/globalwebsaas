@@ -22,7 +22,7 @@ export default function Sidebar({ onClose }: { onClose?: () => void }) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/auth/login')
+    router.push('/')
   }
 
   const go = (path: string) => {
