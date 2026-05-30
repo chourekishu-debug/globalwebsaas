@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import SocialConnectWidget from '@/components/SocialConnectWidget';
 
 const API_KEYS_CONFIG = [
   { key:'openrouterKey',    label:'OpenRouter API Key (FREE — Recommended)', hint:'sk-or-v1-...', group:'AI', link:'https://openrouter.ai/keys' },
@@ -16,6 +15,15 @@ const API_KEYS_CONFIG = [
 ]
 
 const GROUPS = ['AI','Ads','WhatsApp','Payments']
+
+function SocialConnectWidget() {
+  return (
+    <div style={{ padding:'16px', border:'1px dashed rgba(108,71,255,.3)', borderRadius:12, color:'#9090b8' }}>
+      <div style={{ fontSize:13, fontWeight:600, marginBottom:8, color:'#6c47ff' }}>Social connections will appear here</div>
+      <div style={{ fontSize:12 }}>Connect LinkedIn and Facebook to publish AI-generated content automatically.</div>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const [keys, setKeys] = useState<Record<string,string>>(() => {

@@ -125,7 +125,7 @@ export default function SmartResizeTool() {
     const results: ResizedImage[] = toGenerate.map(s => ({ sizeId: s.id, dataUrl: '', loading: true }));
     setResizedImages(results);
 
-    for (let i = 0; i < toGenerate.size; i++) {
+    for (let i = 0; i < toGenerate.length; i++) {
       const size = toGenerate[i];
       try {
         const dataUrl = await resizeImageOnCanvas(uploadedImage, size.w, size.h, fit, bgColor);
