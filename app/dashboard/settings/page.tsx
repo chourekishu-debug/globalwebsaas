@@ -15,7 +15,6 @@ const API_KEYS_CONFIG = [
   { key:'razorpaySecret',   label:'Razorpay Key Secret', hint:'••••••••••', group:'Payments', link:'https://dashboard.razorpay.com' },
 ]
 
-
 const GROUPS = ['AI','Ads','WhatsApp','Payments']
 
 export default function SettingsPage() {
@@ -48,15 +47,21 @@ export default function SettingsPage() {
         <p style={{ color:'#9090b8', fontSize:13, margin:0 }}>Configure API keys, profile and platform connections</p>
       </div>
 
+      {/* Tabs */}
       <div className="tab-bar" style={{ marginBottom:18 }}>
-        {[['api','🔑 API Keys'],['profile','👤 Profile'],['notifications','🔔 Notifications'],['billing','💳 Billing']].map(([k,l]) => (
+        {[
+          ['api','🔑 API Keys'],
+          ['connections','🔗 Social Connect'],
+          ['profile','👤 Profile'],
+          ['billing','💳 Billing'],
+        ].map(([k,l]) => (
           <div key={k} className={`tab ${tab===k?'active':''}`} onClick={() => setTab(k)}>{l}</div>
         ))}
       </div>
 
+      {/* API KEYS TAB */}
       {tab === 'api' && (
         <div>
-          {/* Info banner */}
           <div style={{ background:'rgba(0,212,170,.08)', border:'1px solid rgba(0,212,170,.2)', borderRadius:12, padding:'12px 16px', marginBottom:18, display:'flex', gap:12 }}>
             <span style={{ fontSize:18 }}>🆓</span>
             <div>
@@ -101,10 +106,48 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* SOCIAL CONNECTIONS TAB */}
+      {tab === 'connections' && (
+        <div>
+          <div style={{ background:'rgba(108,71,255,.08)', border:'1px solid rgba(108,71,255,.2)', borderRadius:12, padding:'12px 16px', marginBottom:18, display:'flex', gap:12 }}>
+            <span style={{ fontSize:18 }}>🔗</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:600, marginBottom:3, color:'#a78bfa' }}>Connect your social media accounts</div>
+              <div style={{ fontSize:12, color:'#9090b8' }}>Once connected, posts and articles generated from AI will automatically publish to your LinkedIn and Facebook pages — no manual work needed.</div>
+            </div>
+          </div>
+          <div className="card">
+            <h3 style={{ fontSize:14, fontWeight:700, margin:'0 0 16px', paddingBottom:10, borderBottom:'1px solid rgba(255,255,255,.07)' }}>
+              📱 Platform Connections
+            </h3>
+            <SocialConnectWidget />
+          </div>
+
+          {/* How it works */}
+          <div className="card" style={{ marginTop:14 }}>
+            <h3 style={{ fontSize:14, fontWeight:700, margin:'0 0 14px' }}>⚡ How Auto-Posting Works</h3>
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              {[
+                { step:'1', text:'Connect your LinkedIn or Facebook account by clicking the button above', color:'#6c47ff' },
+                { step:'2', text:'Go to AI Generator → generate any content (article, social post, ad copy)', color:'#a855f7' },
+                { step:'3', text:'Click "Publish" — content goes live on your connected pages instantly', color:'#ec4899' },
+                { step:'4', text:'Track performance in Analytics dashboard', color:'#10b981' },
+              ].map(({ step, text, color }) => (
+                <div key={step} style={{ display:'flex', gap:12, alignItems:'flex-start' }}>
+                  <div style={{ width:28, height:28, borderRadius:'50%', background:`rgba(${color},0.1)`, border:`1px solid ${color}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color, flexShrink:0 }}>{step}</div>
+                  <p style={{ fontSize:13, color:'#9090b8', margin:0, paddingTop:4 }}>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROFILE TAB */}
       {tab === 'profile' && (
         <div className="card">
           <h3 style={{ fontSize:14, fontWeight:700, margin:'0 0 18px' }}>Your Profile</h3>
-          {[['Full Name','Graicy Choure'],['Email','contact@globalwebsaas.org'],['Business','GlobalWebSaaS'],['Phone','+91 98765 43210'],['Plan','Owner (Free)']].map(([l,v]) => (
+          {[['Full Name','Graicy Choure'],['Email','contact@globalwebsaas.org'],['Business','GlobalWebSaaS'],['Phone','+91 99811 99648'],['Plan','Owner (Free)']].map(([l,v]) => (
             <div key={l} className="input-group">
               <label>{l}</label>
               <input className="input-field" defaultValue={v} readOnly={l==='Plan'} style={{ opacity:l==='Plan'?.7:1 }}/>
@@ -113,7 +156,8 @@ export default function SettingsPage() {
           <button className="btn btn-primary">Save Profile</button>
         </div>
       )}
-<SocialConnectWidget />
+
+      {/* BILLING TAB */}
       {tab === 'billing' && (
         <div className="card">
           <h3 style={{ fontSize:14, fontWeight:700, margin:'0 0 14px' }}>Billing & Plan</h3>
