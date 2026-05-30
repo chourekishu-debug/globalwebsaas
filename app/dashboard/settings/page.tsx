@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import SocialConnectWidget from '@/components/SocialConnectWidget';
 
 const API_KEYS_CONFIG = [
   { key:'openrouterKey',    label:'OpenRouter API Key (FREE — Recommended)', hint:'sk-or-v1-...', group:'AI', link:'https://openrouter.ai/keys' },
@@ -13,6 +14,7 @@ const API_KEYS_CONFIG = [
   { key:'razorpayKeyId',    label:'Razorpay Key ID',     hint:'rzp_live_...', group:'Payments', link:'https://dashboard.razorpay.com' },
   { key:'razorpaySecret',   label:'Razorpay Key Secret', hint:'••••••••••', group:'Payments', link:'https://dashboard.razorpay.com' },
 ]
+
 
 const GROUPS = ['AI','Ads','WhatsApp','Payments']
 
@@ -111,7 +113,7 @@ export default function SettingsPage() {
           <button className="btn btn-primary">Save Profile</button>
         </div>
       )}
-
+<SocialConnectWidget />
       {tab === 'billing' && (
         <div className="card">
           <h3 style={{ fontSize:14, fontWeight:700, margin:'0 0 14px' }}>Billing & Plan</h3>
