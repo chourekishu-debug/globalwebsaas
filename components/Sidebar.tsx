@@ -9,6 +9,7 @@ const NAV = [
   { icon:'📱', label:'Social Media',   path:'/dashboard/social' },
   { icon:'🎨', label:'Creative Studio',path:'/dashboard/creative' },
   { icon:'📸', label:'Creative Analyzer', path:'/dashboard/creative-analyzer' },
+  { icon:'🔄', label:'Smart Resize', path:'/dashboard/smart-resize' },
   { icon:'🌐', label:'Landing Pages',   path:'/dashboard/landing' }, 
   { icon:'👥', label:'Lead Manager',   path:'/dashboard/leads' },
   { icon:'📈', label:'Analytics',      path:'/dashboard/analytics' },
