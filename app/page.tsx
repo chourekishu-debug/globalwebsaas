@@ -285,7 +285,18 @@ export default function LandingPage() {
       usdYear: '$4,999', usdMonth: '$499',
       inrYear: '₹4,999', inrMonth: '₹4,999',
       tag: '', color: 'border-gray-700',
-      features: ['AI Content Generator (8 tools)', 'Ad Creative Studio', 'Landing Page Builder (5 pages)', 'WhatsApp Automation (1,000 msg/mo)', 'Social Media Scheduler', 'Lead Manager', '1 User', 'Email Support'],
+      platformBadge: '1 Platform',
+      platformDesc: 'Choose any 1: Facebook, Instagram, LinkedIn, or WhatsApp',
+      features: [
+        '✅ 1 Social Platform of your choice',
+        'AI Content Generator (8 tools)',
+        'Ad Creative Studio',
+        'Landing Page Builder (5 pages)',
+        'WhatsApp OR Social Scheduler',
+        'Lead Manager',
+        '1 User',
+        'Email Support',
+      ],
       cta: 'Book Demo',
     },
     {
@@ -293,7 +304,18 @@ export default function LandingPage() {
       usdYear: '$6,999', usdMonth: '$699',
       inrYear: '₹6,999', inrMonth: '₹6,999',
       tag: '⭐ Most Popular', color: 'border-purple-500',
-      features: ['Everything in Basic', 'Unlimited Landing Pages', 'WhatsApp Automation (5,000 msg/mo)', 'Client CRM (unlimited clients)', 'Campaign Analytics & ROAS', 'Facebook & Instagram API', '5 Users', 'Priority Support (WhatsApp)'],
+      platformBadge: '2 Platforms',
+      platformDesc: 'Choose any 2: Facebook, Instagram, LinkedIn, WhatsApp',
+      features: [
+        '✅ 2 Social Platforms of your choice',
+        'Everything in Basic',
+        'Unlimited Landing Pages',
+        'WhatsApp Automation (5,000 msg/mo)',
+        'Client CRM (unlimited clients)',
+        'Campaign Analytics & ROAS',
+        '5 Users',
+        'Priority Support (WhatsApp)',
+      ],
       cta: 'Book Demo',
     },
     {
@@ -301,7 +323,18 @@ export default function LandingPage() {
       usdYear: '$8,999', usdMonth: '$899',
       inrYear: '₹8,999', inrMonth: '₹8,999',
       tag: '🚀 Best Value', color: 'border-pink-500',
-      features: ['Everything in Professional', 'White Label (your own branding)', 'Custom Domain', 'LinkedIn API Integration', 'API Access', 'Dedicated Account Manager', 'Unlimited Users', '24/7 Priority Support'],
+      platformBadge: 'All Platforms',
+      platformDesc: 'Facebook + Instagram + LinkedIn + WhatsApp + Google',
+      features: [
+        '✅ ALL Platforms Included',
+        'Everything in Professional',
+        'White Label (your own branding)',
+        'Custom Domain',
+        'LinkedIn API Integration',
+        'Google Business Profile',
+        'Dedicated Account Manager',
+        'Unlimited Users · 24/7 Support',
+      ],
       cta: 'Book Demo',
     },
   ];
@@ -477,6 +510,12 @@ export default function LandingPage() {
                   </div>
                 )}
                 <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>{plan.name}</h3>
+                {/* Platform Badge */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: i === 2 ? 'rgba(236,72,153,0.15)' : i === 1 ? 'rgba(108,71,255,0.15)' : 'rgba(255,255,255,0.07)', border: `1px solid ${i === 2 ? 'rgba(236,72,153,0.4)' : i === 1 ? 'rgba(108,71,255,0.4)' : 'rgba(255,255,255,0.15)'}`, borderRadius: 100, padding: '4px 14px', marginBottom: 8 }}>
+                  <span style={{ fontSize: 16 }}>🌐</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: i === 2 ? '#f472b6' : i === 1 ? '#a78bfa' : '#c0c0e0' }}>{(plan as any).platformBadge}</span>
+                </div>
+                <p style={{ color: '#6060a0', fontSize: 12, marginBottom: 16 }}>{(plan as any).platformDesc}</p>
                 <div style={{ marginBottom: 24 }}>
                   <span style={{ fontSize: 42, fontWeight: 900, color: i === 1 ? '#a78bfa' : i === 2 ? '#f472b6' : '#f0f0ff' }}>
                     {currency === 'INR' ? plan.inrMonth : plan.usdYear}
@@ -551,3 +590,4 @@ export default function LandingPage() {
     </div>
   );
 }
+
