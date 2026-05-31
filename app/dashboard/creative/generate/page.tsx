@@ -2,493 +2,550 @@
 
 import { useState } from 'react';
 
-// ─── TYPES ────────────────────────────────────────────────────
+const OPENROUTER_API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || '';
+
+// ─── TYPES ───────────────────────────────────────────────────────────
 interface AdCreative {
   headline: string;
   subheadline: string;
+  tagline: string;
+  offerBadge: string;
+  features: string[];
+  benefits: { icon: string; title: string; desc: string }[];
+  pricing: { label: string; price: string; note: string }[];
+  cta: string;
+  ctaSecondary: string;
+  trustBadges: string[];
   adCopy: string;
-  ctaText: string;
-  hashtags: string;
-  imageUrl: string;
-  imagePrompt: string;
-  primaryColor: string;
-  textColor: string;
-  platform: string;
-  businessName: string;
-  offer: string;
+  hashtags: string[];
   phone: string;
+  website: string;
+  theme: { primary: string; accent: string; bg: string; text: string };
 }
 
-type Platform = 'instagram' | 'facebook' | 'linkedin' | 'story';
-type Tab = 'create' | 'preview' | 'export';
+const THEMES = [
+  { name: 'Deep Blue', primary: '#1a1f5e', accent: '#4f8ef7', bg: 'linear-gradient(135deg,#0d1340 0%,#1a1f5e 50%,#0f2d6b 100%)', text: '#fff' },
+  { name: 'Purple Power', primary: '#2d0052', accent: '#a855f7', bg: 'linear-gradient(135deg,#1a0030 0%,#2d0052 50%,#1e0040 100%)', text: '#fff' },
+  { name: 'Saffron India', primary: '#7c2d00', accent: '#f97316', bg: 'linear-gradient(135deg,#431200 0%,#7c2d00 50%,#3d1a00 100%)', text: '#fff' },
+  { name: 'Emerald Pro', primary: '#052e16', accent: '#22c55e', bg: 'linear-gradient(135deg,#021a0c 0%,#052e16 50%,#023d12 100%)', text: '#fff' },
+  { name: 'Crimson Bold', primary: '#450a0a', accent: '#ef4444', bg: 'linear-gradient(135deg,#2a0505 0%,#450a0a 50%,#350808 100%)', text: '#fff' },
+];
+
+const BUSINESS_TYPES = [
+  'Dental Clinic', 'Beauty Salon', 'Gym & Fitness', 'Restaurant', 'Real Estate',
+  'Hospital / Clinic', 'Jewellery Store', 'Clothing Store', 'Coaching Institute',
+  'E-commerce', 'Agency', 'Hotel / Resort', 'Pharmacy', 'Other',
+];
 
 const PLATFORMS = [
-  { id: 'instagram' as Platform, label: 'Instagram', size: '1080×1080', icon: '📸', ratio: 'aspect-square' },
-  { id: 'facebook' as Platform, label: 'Facebook', size: '1200×628', icon: '👥', ratio: 'aspect-[1.91/1]' },
-  { id: 'linkedin' as Platform, label: 'LinkedIn', size: '1200×627', icon: '💼', ratio: 'aspect-[1.91/1]' },
-  { id: 'story' as Platform, label: 'Story', size: '1080×1920', icon: '📲', ratio: 'aspect-[9/16]' },
+  { id: 'instagram', label: 'Instagram', size: '1080×1080', ratio: '1/1' },
+  { id: 'facebook', label: 'Facebook', size: '1200×628', ratio: '1.91/1' },
+  { id: 'story', label: 'Story', size: '1080×1920', ratio: '9/16' },
+  { id: 'linkedin', label: 'LinkedIn', size: '1200×627', ratio: '1.91/1' },
 ];
 
-const COLOR_THEMES = [
-  { name: 'Ocean', primary: '#0EA5E9', bg: '#0C4A6E', text: '#FFFFFF' },
-  { name: 'Royal', primary: '#7C3AED', bg: '#2E1065', text: '#FFFFFF' },
-  { name: 'Fire', primary: '#EF4444', bg: '#7F1D1D', text: '#FFFFFF' },
-  { name: 'Forest', primary: '#10B981', bg: '#064E3B', text: '#FFFFFF' },
-  { name: 'Gold', primary: '#D4AF37', bg: '#1C1917', text: '#FFFFFF' },
-  { name: 'Rose', primary: '#DB2777', bg: '#500724', text: '#FFFFFF' },
-  { name: 'Slate', primary: '#38BDF8', bg: '#0F172A', text: '#FFFFFF' },
-  { name: 'Warm', primary: '#F97316', bg: '#431407', text: '#FFFFFF' },
-];
+// ─── MOCK GENERATION (replace with real API call) ─────────────────────
+async function generateCreative(form: Record<string, string>): Promise<AdCreative> {
+  const prompt = `You are an expert Indian ad creative writer. Create a rich, detailed ad creative for this business:
 
-const NICHES = [
-  'Dental Clinic', 'Coaching Institute', 'Beauty Salon', 'Gym & Fitness',
-  'Restaurant', 'Real Estate', 'Hospital', 'Jewellery Store',
-];
+Business: ${form.businessName}
+Type: ${form.businessType}
+City: ${form.city}
+Offer: ${form.offer || 'Best quality service'}
+Target: ${form.target || 'Local customers'}
+Phone: ${form.phone || '+91 98765 43210'}
+Website: ${form.website || 'www.business.com'}
 
-function getDemoCreative(business: string, offer: string): Partial<AdCreative> {
-  const b = business.toLowerCase();
-  if (/dental|dentist|teeth/.test(b)) return {
-    headline: 'Smile Brighter Today!', subheadline: 'Painless, Affordable Dental Care',
-    adCopy: 'Say goodbye to dental anxiety! Our expert team uses cutting-edge technology for pain-free treatments — from routine checkups to complete smile makeovers. Trusted by 500+ happy families. Book your FREE consultation today and transform your smile!',
-    ctaText: '📅 Book FREE Checkup',
-    hashtags: '#DentalCare #SmileMakeover #PainlessDentistry #HealthySmile #DentalClinic #FamilyDentist #ToothCare #OralHealth',
-    offer: offer || '🦷 First Consultation FREE!', phone: '+91 98765 43210', primaryColor: '#0EA5E9',
-    imagePrompt: `ultra realistic professional advertisement photo, beautiful happy Indian woman with perfect bright white teeth smiling confidently, luxury modern dental clinic background with blue ambient lighting, shallow depth of field, 8k commercial photography, cinematic lighting, vibrant colors, award winning advertisement`,
-  };
-  if (/coaching|academy|institute|classes/.test(b)) return {
-    headline: 'Your Rank. Our Mission.', subheadline: '500+ Selections in Competitive Exams',
-    adCopy: 'Join the coaching institute that transforms students into toppers! Expert faculty, proven methodology, and personalized attention. New batch starting soon — limited seats. 500+ NEET/JEE/UPSC selections. Your success starts here!',
-    ctaText: '🎯 Join FREE Demo Class',
-    hashtags: '#NEETCoaching #JEEPrep #GovernmentExam #StudyMotivation #CrackNEET2026 #UPSC #TopperMindset #ExamPrep',
-    offer: offer || '📚 FREE Demo + Study Material', phone: '+91 98765 43210', primaryColor: '#7C3AED',
-    imagePrompt: `ultra realistic motivational advertisement photo, confident young Indian student celebrating success holding trophy, books and laptop visible, purple and gold dramatic lighting, university library background, cinematic 8k commercial photography, bokeh effect, aspirational achievement mood, award winning advertisement`,
-  };
-  if (/salon|beauty|spa|hair/.test(b)) return {
-    headline: 'Glow Up. Stand Out.', subheadline: 'Premium Beauty Treatments & Bridal Services',
-    adCopy: 'Experience luxury beauty like never before! Expert stylists, premium products, and a relaxing atmosphere. Hair, skin, nails, and bridal makeovers — all under one roof. Walk in and walk out transformed. First visit? Get 30% OFF!',
-    ctaText: '💅 Book Your Session',
-    hashtags: '#BeautySalon #GlowUp #HairTransformation #SkinCare #BridalMakeup #NailArt #LuxuryBeauty #MakeoverMagic',
-    offer: offer || '✨ 30% OFF First Visit!', phone: '+91 98765 43210', primaryColor: '#DB2777',
-    imagePrompt: `ultra realistic glamour advertisement photo, stunning beautiful Indian woman with perfect hair and flawless skin and elegant makeup in luxury beauty salon, pink and gold ambient lighting, bokeh background with salon mirrors, 8k commercial beauty photography, vogue magazine style, cinematic soft lighting, award winning advertisement`,
-  };
-  if (/gym|fitness|workout/.test(b)) return {
-    headline: 'No Excuses. Only Results.', subheadline: 'Transform Your Body in 90 Days',
-    adCopy: 'Stop dreaming, start doing! Join with modern equipment, certified personal trainers, and proven transformation programs. Nutrition plans, group classes, and 24/7 access. Your best body is one decision away — Start your 7-day FREE trial today!',
-    ctaText: '💪 Start FREE Trial',
-    hashtags: '#GymLife #BodyTransformation #FitnessGoals #PersonalTrainer #WorkoutMotivation #FitIndia #GymMotivation #NoExcuses',
-    offer: offer || '🔥 7 Days FREE Trial!', phone: '+91 98765 43210', primaryColor: '#EF4444',
-    imagePrompt: `ultra realistic powerful advertisement photo, fit muscular Indian athlete doing intense workout with dumbbells in premium modern gym, dramatic dark background with red and orange rim lighting, sweat and determination visible, 8k sports photography, cinematic epic lighting, Nike advertisement style, motivational mood, award winning`,
-  };
-  if (/restaurant|food|dhaba|cafe/.test(b)) return {
-    headline: 'Taste the Difference!', subheadline: 'Authentic Flavours, Unforgettable Experience',
-    adCopy: 'Indulge in the finest culinary experience! Fresh ingredients, secret family recipes, and warm hospitality make every meal unforgettable. Perfect for family dinners, celebrations, and corporate lunches. Book your table now!',
-    ctaText: '🍽️ Reserve Your Table',
-    hashtags: '#FoodLovers #AuthenticFood #RestaurantLife #DineOut #FoodPhotography #ChefSpecial #FoodieLife #GourmetFood',
-    offer: offer || '🎉 20% OFF Today!', phone: '+91 98765 43210', primaryColor: '#EF4444',
-    imagePrompt: `ultra realistic mouth-watering food advertisement photo, stunning arrangement of colorful Indian dishes biryani and curry and naan on elegant dark stone table, steam rising, golden hour lighting, 8k food photography, michelin star restaurant style, bokeh background, award winning food advertisement`,
-  };
-  if (/real.?estate|property|flat|apartment/.test(b)) return {
-    headline: 'Your Dream Home Awaits', subheadline: 'Premium Properties at Best Prices',
-    adCopy: 'Find your perfect home with our exclusive listings! Luxury apartments, villas, and commercial spaces in prime locations. Expert guidance, transparent pricing, and seamless buying experience. Schedule a site visit today!',
-    ctaText: '🏠 Book Site Visit',
-    hashtags: '#RealEstate #DreamHome #PropertyInvestment #LuxuryHomes #NewLaunch #HomeSearch #PropertyForSale #InvestSmart',
-    offer: offer || '🏡 Free Site Visit!', phone: '+91 98765 43210', primaryColor: '#10B981',
-    imagePrompt: `ultra realistic premium real estate advertisement photo, stunning luxury modern apartment interior with floor to ceiling windows overlooking city skyline, golden hour sunlight, elegant minimalist furniture, 8k architectural photography, cinematic composition, aspirational lifestyle mood, award winning advertisement`,
-  };
-  return {
-    headline: `${business} — Excellence Delivered!`, subheadline: 'Trusted. Professional. Reliable.',
-    adCopy: `${business} delivers premium quality with unmatched professionalism. Join thousands of satisfied customers who trust us for reliable results every time. Our expert team is dedicated to your success. Contact us today for a free consultation!`,
-    ctaText: '📞 Contact Us Today',
-    hashtags: `#${business.replace(/\s+/g,'').slice(0,15)} #Excellence #Quality #Trusted #Professional #BestService #CustomerFirst #PremiumQuality`,
-    offer: offer || '🎁 Special Offer This Month!', phone: '+91 98765 43210', primaryColor: '#6c47ff',
-    imagePrompt: `ultra realistic premium business advertisement photo, confident professional Indian business team in modern office, success and achievement mood, bright natural lighting, 8k commercial photography, corporate success lifestyle, award winning advertisement`,
-  };
+Return ONLY valid JSON (no markdown, no explanation) in this exact format:
+{
+  "headline": "Powerful 4-6 word headline",
+  "subheadline": "Supporting benefit statement in 8-12 words",
+  "tagline": "Short memorable tagline",
+  "offerBadge": "Special offer text like '50% OFF' or 'FREE Consultation'",
+  "features": ["Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 5", "Feature 6"],
+  "benefits": [
+    {"icon": "⚡", "title": "Benefit Title", "desc": "Short description"},
+    {"icon": "🏆", "title": "Benefit Title", "desc": "Short description"},
+    {"icon": "💎", "title": "Benefit Title", "desc": "Short description"},
+    {"icon": "🎯", "title": "Benefit Title", "desc": "Short description"}
+  ],
+  "pricing": [
+    {"label": "Basic", "price": "₹999", "note": "Perfect for starters"},
+    {"label": "Pro", "price": "₹1,999", "note": "Most popular choice"},
+    {"label": "Premium", "price": "₹3,999", "note": "Complete package"}
+  ],
+  "cta": "Primary call to action text",
+  "ctaSecondary": "Secondary action text",
+  "trustBadges": ["Badge 1", "Badge 2", "Badge 3", "Badge 4"],
+  "adCopy": "2-3 sentence compelling ad copy for social media",
+  "hashtags": ["#Tag1", "#Tag2", "#Tag3", "#Tag4", "#Tag5", "#Tag6", "#Tag7", "#Tag8"],
+  "phone": "${form.phone || '+91 98765 43210'}",
+  "website": "${form.website || 'www.business.com'}"
+}`;
+
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.0-flash-001',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+      }),
+    });
+    const data = await res.json();
+    const raw = data?.choices?.[0]?.message?.content || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch {
+    // Fallback demo data
+    return {
+      headline: `${form.businessName} Excellence`,
+      subheadline: 'Delivering World-Class Service Right in Your City',
+      tagline: 'Everything You Need. All in One Place.',
+      offerBadge: 'FREE Consultation',
+      features: ['Expert Professionals', 'Latest Technology', 'Affordable Prices', 'Quick Results', 'Trusted by 1000+', '24/7 Support'],
+      benefits: [
+        { icon: '⚡', title: 'Quick Service', desc: 'Same day results' },
+        { icon: '🏆', title: 'Award Winning', desc: 'Best in city' },
+        { icon: '💎', title: 'Premium Quality', desc: 'No compromise' },
+        { icon: '🎯', title: 'Results Driven', desc: '100% satisfaction' },
+      ],
+      pricing: [
+        { label: 'Basic', price: '₹999', note: 'Perfect for starters' },
+        { label: 'Pro', price: '₹1,999', note: 'Most popular' },
+        { label: 'Premium', price: '₹3,999', note: 'Complete package' },
+      ],
+      cta: 'Book Free Consultation',
+      ctaSecondary: 'Call Now',
+      trustBadges: ['Trusted by 1000+', 'ISO Certified', '5★ Rating', 'Since 2015'],
+      adCopy: `Looking for the best ${form.businessType} in ${form.city}? ${form.businessName} offers premium services at unbeatable prices. Book your free consultation today!`,
+      hashtags: [`#${form.businessType?.replace(/\s/g, '')}`, `#${form.city}`, '#BestInCity', '#QualityService', '#TrustedBrand', '#BookNow', '#India', '#LocalBusiness'],
+      phone: form.phone || '+91 98765 43210',
+      website: form.website || 'www.business.com',
+      theme: THEMES[0],
+    };
+  }
 }
 
-function AdImagePreview({ creative, platform, showOverlay }: { creative: AdCreative; platform: Platform; showOverlay: boolean }) {
-  const ratios: Record<Platform, string> = { instagram: 'aspect-square', facebook: 'aspect-[1.91/1]', linkedin: 'aspect-[1.91/1]', story: 'aspect-[9/16]' };
+// ─── AD CREATIVE RENDERER ─────────────────────────────────────────────
+function AdCreativeCard({ creative, theme, platform, businessName, city }: {
+  creative: AdCreative; theme: typeof THEMES[0]; platform: typeof PLATFORMS[0]; businessName: string; city: string;
+}) {
+  const isStory = platform.id === 'story';
+  const isSquare = platform.id === 'instagram';
+
   return (
-    <div className={`relative w-full ${ratios[platform]} overflow-hidden rounded-xl shadow-2xl bg-gray-800`} style={{ maxHeight: platform === 'story' ? '480px' : 'auto' }}>
-      <img src={creative.imageUrl} alt={creative.headline} className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.85) 100%)' }} />
-      {showOverlay && (
-        <>
-          <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-            <div style={{ backgroundColor: creative.primaryColor }} className="text-white text-xs px-3 py-1 rounded-full font-bold shadow-lg max-w-[60%]">{creative.offer}</div>
-            <div className="bg-black/40 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">{creative.businessName}</div>
+    <div style={{
+      background: theme.bg,
+      color: theme.text,
+      width: '100%',
+      aspectRatio: platform.ratio,
+      borderRadius: 16,
+      overflow: 'hidden',
+      position: 'relative',
+      fontFamily: "'Segoe UI', system-ui, sans-serif",
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* Decorative top accent */}
+      <div style={{ height: 6, background: `linear-gradient(90deg, ${theme.accent}, ${theme.accent}88, ${theme.accent})`, flexShrink: 0 }} />
+
+      {/* Decorative circles */}
+      <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: `${theme.accent}15`, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', bottom: -40, left: -40, width: 160, height: 160, borderRadius: '50%', background: `${theme.accent}10`, pointerEvents: 'none' }} />
+
+      <div style={{ padding: isStory ? '20px 20px' : '20px 24px', flex: 1, display: 'flex', flexDirection: 'column', gap: isStory ? 12 : 16, position: 'relative', zIndex: 1 }}>
+
+        {/* Brand + Offer Badge Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ fontSize: isStory ? 13 : 12, fontWeight: 700, color: theme.accent, letterSpacing: 2, textTransform: 'uppercase' }}>{businessName}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{city}</div>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 p-4">
-            <h2 className="text-white font-black text-xl leading-tight mb-1 drop-shadow-lg">{creative.headline}</h2>
-            <p className="text-white/90 text-sm mb-2 drop-shadow leading-snug">{creative.subheadline}</p>
-            {platform !== 'story' && <p className="text-white/70 text-xs mb-3 line-clamp-2 drop-shadow">{creative.adCopy}</p>}
-            <div className="flex items-center gap-2">
-              <button style={{ backgroundColor: creative.primaryColor }} className="text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">{creative.ctaText} →</button>
-              {creative.phone && <span className="text-white/80 text-xs bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full">📞 {creative.phone}</span>}
+          {creative.offerBadge && (
+            <div style={{ background: theme.accent, color: '#fff', fontSize: 11, fontWeight: 800, padding: '5px 12px', borderRadius: 100, textTransform: 'uppercase', letterSpacing: 1 }}>
+              {creative.offerBadge}
             </div>
-          </div>
-        </>
-      )}
-      <div className="absolute top-2 right-2">
-        <span className="text-xs bg-black/60 text-white px-2 py-0.5 rounded-full backdrop-blur-sm">✨ AI Generated</span>
-      </div>
-    </div>
-  );
-}
-
-function FacebookPreview({ creative }: { creative: AdCreative }) {
-  return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-lg max-w-sm">
-      <div className="p-3 flex items-center gap-2 border-b border-gray-100">
-        <div style={{ backgroundColor: creative.primaryColor }} className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">{creative.businessName[0]}</div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate">{creative.businessName}</p>
-          <p className="text-xs text-gray-400">Sponsored · 🌍</p>
+          )}
         </div>
-        <span className="text-gray-400 text-lg shrink-0">⋯</span>
-      </div>
-      <div className="px-3 py-2">
-        <p className="text-sm text-gray-800 leading-relaxed line-clamp-3">{creative.adCopy} <span className="text-blue-600 font-medium">See more</span></p>
-      </div>
-      <div className="relative aspect-[1.91/1] overflow-hidden">
-        <img src={creative.imageUrl} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.75))' }} />
-        <div className="absolute bottom-3 left-3 right-3">
-          <p className="text-white font-black text-lg leading-tight">{creative.headline}</p>
-          <p className="text-white/80 text-xs">{creative.subheadline}</p>
-        </div>
-      </div>
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-t border-gray-200">
-        <div><p className="text-xs text-gray-500">globalwebsaas.com</p><p className="text-sm font-bold text-gray-900">{creative.offer}</p></div>
-        <button style={{ backgroundColor: creative.primaryColor }} className="text-white text-xs font-bold px-4 py-2 rounded-md shrink-0">{creative.ctaText}</button>
-      </div>
-      <div className="px-3 py-2 flex justify-between text-xs text-gray-400 border-t border-gray-100">
-        <div className="flex gap-3"><span>👍 Like</span><span>💬 Comment</span><span>↗️ Share</span></div>
-        <span>❤️ 1.2K</span>
-      </div>
-    </div>
-  );
-}
 
-function InstagramPreview({ creative }: { creative: AdCreative }) {
-  return (
-    <div className="bg-white rounded-xl overflow-hidden shadow-lg max-w-xs">
-      <div className="p-3 flex items-center gap-2">
-        <div style={{ background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' }} className="w-8 h-8 rounded-full p-0.5 shrink-0">
-          <div style={{ backgroundColor: creative.primaryColor }} className="w-full h-full rounded-full flex items-center justify-center text-white text-xs font-bold">{creative.businessName[0]}</div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-gray-900 truncate">{creative.businessName.toLowerCase().replace(/\s+/g,'_')}</p>
-          <p className="text-xs text-gray-400">Sponsored</p>
-        </div>
-        <span className="text-gray-400 shrink-0">⋯</span>
-      </div>
-      <div className="relative aspect-square overflow-hidden">
-        <img src={creative.imageUrl} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8))' }} />
-        <div className="absolute bottom-4 left-4 right-4">
-          <div style={{ backgroundColor: creative.primaryColor }} className="text-white text-xs px-3 py-1 rounded-full font-bold inline-block mb-2">{creative.offer}</div>
-          <p className="text-white font-black text-xl leading-tight">{creative.headline}</p>
-          <p className="text-white/80 text-sm">{creative.subheadline}</p>
-        </div>
-      </div>
-      <div className="px-3 py-2">
-        <div className="flex gap-4 mb-2"><span className="text-xl">❤️</span><span className="text-xl">💬</span><span className="text-xl">↗️</span><span className="text-xl ml-auto">🔖</span></div>
-        <p className="text-xs font-bold text-gray-900 mb-0.5">2,847 likes</p>
-        <p className="text-xs text-gray-700 line-clamp-2"><span className="font-bold">{creative.businessName.toLowerCase().replace(/\s+/g,'_')} </span>{creative.adCopy.slice(0,80)}...</p>
-        <p className="text-xs text-blue-500 mt-1 line-clamp-1">{creative.hashtags.split(' ').slice(0,5).join(' ')}</p>
-        <button style={{ backgroundColor: creative.primaryColor }} className="w-full text-white text-sm font-bold py-2 rounded-lg mt-2">{creative.ctaText} →</button>
-      </div>
-    </div>
-  );
-}
-
-export default function CreativeStudioPage() {
-  const [tab, setTab] = useState<Tab>('create');
-  const [business, setBusiness] = useState('');
-  const [offer, setOffer] = useState('');
-  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['instagram', 'facebook']);
-  const [selectedTheme, setSelectedTheme] = useState(COLOR_THEMES[0]);
-  const [showOverlay, setShowOverlay] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [creative, setCreative] = useState<AdCreative | null>(null);
-  const [activePreview, setActivePreview] = useState<Platform>('instagram');
-  const [copied, setCopied] = useState('');
-
-  async function handleGenerate() {
-    if (!business.trim()) return;
-    setGenerating(true);
-    setCreative(null);
-    try {
-      const demo = getDemoCreative(business, offer);
-      const imagePrompt = demo.imagePrompt || `${business} professional advertisement`;
-      const encodedPrompt = encodeURIComponent(`${imagePrompt}, sharp focus, 8k resolution, ultra detailed, professional commercial photography, award winning advertisement, cinematic lighting, vibrant colors`);
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&enhance=true&model=flux`;
-      setCreative({
-        businessName: business,
-        headline: demo.headline || `${business} — Excellence!`,
-        subheadline: demo.subheadline || 'Trusted by Thousands in Indore',
-        adCopy: demo.adCopy || 'Professional services you can trust.',
-        ctaText: demo.ctaText || 'Contact Us Now',
-        hashtags: demo.hashtags || '#Indore #Business #Quality',
-        imageUrl,
-        imagePrompt: imagePrompt,
-        primaryColor: demo.primaryColor || selectedTheme.primary,
-        textColor: '#FFFFFF',
-        platform: selectedPlatforms[0],
-        offer: demo.offer || offer || 'Special Offer!',
-        phone: demo.phone || '+91 98765 43210',
-      });
-      setTab('preview');
-    } catch (err) { console.error(err); }
-    finally { setGenerating(false); }
-  }
-
-  function updateCreative(field: keyof AdCreative, value: string) {
-    if (!creative) return;
-    setCreative({ ...creative, [field]: value });
-  }
-
-  function regenerateImage() {
-    if (!creative) return;
-    const encodedPrompt = encodeURIComponent(`${creative.imagePrompt}, sharp focus, 8k resolution, ultra detailed, professional commercial photography, award winning advertisement, cinematic lighting`);
-    setCreative({ ...creative, imageUrl: `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&enhance=true&model=flux&seed=${Date.now()}` });
-  }
-
-  function copyText(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(''), 2000);
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 bg-gray-900 flex-wrap gap-3">
+        {/* Main Headline */}
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">🎨 Ad Creative Studio</h1>
-          <p className="text-gray-400 text-xs mt-0.5">AI generates complete ad creatives — image + copy + CTA + platform previews — ready to boost</p>
+          <h1 style={{ fontSize: isStory ? 28 : isSquare ? 26 : 24, fontWeight: 900, lineHeight: 1.1, margin: 0, letterSpacing: '-0.5px' }}>
+            {creative.headline}
+          </h1>
+          <p style={{ fontSize: isStory ? 14 : 13, color: 'rgba(255,255,255,0.75)', margin: '8px 0 0', lineHeight: 1.4 }}>
+            {creative.subheadline}
+          </p>
+          {creative.tagline && (
+            <div style={{ marginTop: 8, display: 'inline-block', borderTop: `2px solid ${theme.accent}`, borderBottom: `2px solid ${theme.accent}`, padding: '4px 0', fontSize: 12, color: 'rgba(255,255,255,0.6)', letterSpacing: 1 }}>
+              {creative.tagline}
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
-          {(['create', 'preview', 'export'] as Tab[]).map(t => (
-            <button key={t} onClick={() => (creative || t === 'create') && setTab(t)}
-              className={`text-xs px-4 py-2 rounded-lg capitalize font-medium transition-all ${tab === t ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'} ${!creative && t !== 'create' ? 'opacity-30 cursor-not-allowed' : ''}`}>
-              {t === 'create' ? '✏️ Create' : t === 'preview' ? '👁️ Preview' : '📤 Export'}
-            </button>
-          ))}
+
+        {/* Benefits Grid */}
+        {creative.benefits?.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {creative.benefits.map((b, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{b.icon}</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{b.title}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 2 }}>{b.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Features checklist */}
+        {creative.features?.length > 0 && (
+          <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 12, padding: '12px 14px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: theme.accent, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>What You Get</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 5 }}>
+              {creative.features.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>
+                  <span style={{ color: theme.accent, fontWeight: 700, fontSize: 14 }}>✓</span>
+                  {f}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing Row */}
+        {creative.pricing?.length > 0 && (
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8 }}>Affordable Plans</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+              {creative.pricing.map((p, i) => (
+                <div key={i} style={{
+                  background: i === 1 ? theme.accent : 'rgba(255,255,255,0.08)',
+                  border: `1px solid ${i === 1 ? theme.accent : 'rgba(255,255,255,0.12)'}`,
+                  borderRadius: 10, padding: '10px 8px', textAlign: 'center',
+                }}>
+                  {i === 1 && <div style={{ fontSize: 9, fontWeight: 800, color: '#fff', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 }}>⭐ Popular</div>}
+                  <div style={{ fontSize: 11, color: i === 1 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)' }}>{p.label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>{p.price}</div>
+                  <div style={{ fontSize: 10, color: i === 1 ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.4)', marginTop: 3 }}>{p.note}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CTA Buttons */}
+        <div style={{ display: 'flex', gap: 10, marginTop: 'auto' }}>
+          <div style={{ flex: 2, background: theme.accent, borderRadius: 50, padding: '12px 0', textAlign: 'center', fontWeight: 800, fontSize: 14, cursor: 'pointer' }}>
+            🚀 {creative.cta}
+          </div>
+          <div style={{ flex: 1, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '12px 0', textAlign: 'center', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+            📞 {creative.ctaSecondary}
+          </div>
+        </div>
+
+        {/* Trust badges */}
+        {creative.trustBadges?.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {creative.trustBadges.map((b, i) => (
+              <div key={i} style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 100, padding: '3px 10px', fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>
+                ✓ {b}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer — contact */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10 }}>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>📞 {creative.phone}</div>
+          <div style={{ fontSize: 12, color: theme.accent, fontWeight: 600 }}>🌐 {creative.website}</div>
         </div>
       </div>
 
-      {/* CREATE TAB */}
-      {tab === 'create' && (
-        <div className="max-w-5xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-5">
-              <div>
-                <label className="text-sm text-gray-400 mb-1.5 block">Business / Product Name *</label>
-                <input value={business} onChange={e => setBusiness(e.target.value)} placeholder="e.g. Best Dental Clinic Indore" className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500" />
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {NICHES.map(n => <button key={n} onClick={() => setBusiness(n + ' Indore')} className="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-2.5 py-1 rounded-full transition-colors">{n}</button>)}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-1.5 block">Special Offer / Hook</label>
-                <input value={offer} onChange={e => setOffer(e.target.value)} placeholder="e.g. FREE First Consultation! or 30% OFF This Weekend" className="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500" />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Target Platforms</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {PLATFORMS.map(p => (
-                    <button key={p.id} onClick={() => setSelectedPlatforms(prev => prev.includes(p.id) ? prev.filter(x => x !== p.id) : [...prev, p.id])}
-                      className={`p-3 rounded-xl border text-left transition-all ${selectedPlatforms.includes(p.id) ? 'border-purple-500 bg-purple-900/30' : 'border-gray-700 bg-gray-900 hover:border-gray-500'}`}>
-                      <div className="flex items-center gap-2">
-                        <span>{p.icon}</span>
-                        <div><p className="text-sm font-medium text-white">{p.label}</p><p className="text-xs text-gray-500">{p.size}</p></div>
-                        {selectedPlatforms.includes(p.id) && <span className="ml-auto text-green-400">✓</span>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 mb-2 block">Color Theme</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {COLOR_THEMES.map(theme => (
-                    <button key={theme.name} onClick={() => setSelectedTheme(theme)} style={{ backgroundColor: theme.primary }}
-                      className={`py-2 rounded-lg text-white text-xs font-bold transition-all hover:scale-105 ${selectedTheme.name === theme.name ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-950 scale-105' : ''}`}>
-                      {theme.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
+      {/* Bottom accent bar */}
+      <div style={{ height: 4, background: `linear-gradient(90deg, ${theme.accent}, ${theme.primary})`, flexShrink: 0 }} />
+    </div>
+  );
+}
+
+// ─── COPY PANEL ───────────────────────────────────────────────────────
+function CopyPanel({ creative }: { creative: AdCreative }) {
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copy(text: string, key: string) {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  }
+
+  const CopyBtn = ({ text, label, k }: { text: string; label: string; k: string }) => (
+    <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
+        <button
+          onClick={() => copy(text, k)}
+          style={{ background: copied === k ? '#22c55e22' : '#1e293b', border: `1px solid ${copied === k ? '#22c55e' : '#334155'}`, borderRadius: 6, padding: '4px 10px', fontSize: 11, color: copied === k ? '#22c55e' : '#94a3b8', cursor: 'pointer' }}>
+          {copied === k ? '✓ Copied!' : '📋 Copy'}
+        </button>
+      </div>
+      <p style={{ fontSize: 13, color: '#cbd5e1', margin: 0, lineHeight: 1.6 }}>{text}</p>
+    </div>
+  );
+
+  return (
+    <div>
+      <CopyBtn text={creative.adCopy} label="Ad Copy" k="copy" />
+      <CopyBtn text={creative.headline} label="Headline" k="headline" />
+      <CopyBtn text={creative.subheadline} label="Subheadline" k="sub" />
+      <CopyBtn text={creative.cta} label="CTA" k="cta" />
+      <CopyBtn text={creative.hashtags?.join(' ')} label="Hashtags" k="hashtags" />
+    </div>
+  );
+}
+
+// ─── MAIN PAGE ────────────────────────────────────────────────────────
+export default function GenerateCreativePage() {
+  const [step, setStep] = useState<'form' | 'result'>('form');
+  const [loading, setLoading] = useState(false);
+  const [creative, setCreative] = useState<AdCreative | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState(0);
+  const [selectedPlatform, setSelectedPlatform] = useState(0);
+  const [activeTab, setActiveTab] = useState<'creative' | 'copy'>('creative');
+
+  const [form, setForm] = useState({
+    businessName: '', businessType: '', city: '', offer: '',
+    target: '', phone: '', website: '',
+  });
+
+  function update(k: string, v: string) { setForm(p => ({ ...p, [k]: v })); }
+
+  async function generate() {
+    if (!form.businessName || !form.businessType) return;
+    setLoading(true);
+    try {
+      const result = await generateCreative(form);
+      setCreative(result);
+      setStep('result');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── FORM STEP ──
+  if (step === 'form') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#07070f', color: '#f0f0ff', padding: '32px 24px', fontFamily: 'system-ui, sans-serif' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+          {/* Header */}
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(108,71,255,0.12)', border: '1px solid rgba(108,71,255,0.3)', borderRadius: 100, padding: '5px 14px', marginBottom: 16 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6c47ff', display: 'inline-block' }} />
+              <span style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600 }}>AI Creative Studio</span>
+            </div>
+            <h1 style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-1px', margin: '0 0 8px' }}>
+              Generate Rich Ad Creatives
+            </h1>
+            <p style={{ color: '#6060a0', fontSize: 15, margin: 0 }}>
+              AI builds a full poster-style creative — headline, features, pricing, CTA, trust badges & more
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 32 }}>
+
+            {/* Business Name */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b8', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Business Name *</label>
+              <input
+                value={form.businessName}
+                onChange={e => update('businessName', e.target.value)}
+                placeholder="e.g. Bright Smile Dental Clinic"
+                style={{ width: '100%', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: '12px 16px', color: '#f0f0ff', fontSize: 15, outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
 
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col">
-              <h3 className="font-bold text-base mb-4">📦 What You Get in One Click</h3>
-              <div className="space-y-3 flex-1">
-                {[
-                  { icon: '🖼️', title: 'AI Photo for Your Business', desc: 'Real AI-generated image matching your niche' },
-                  { icon: '✍️', title: 'Headline + Subheadline', desc: 'Attention-grabbing copy that converts browsers to buyers' },
-                  { icon: '📝', title: 'Full Ad Copy (150 words)', desc: 'Ready to paste in Facebook/Instagram Ads Manager' },
-                  { icon: '🎯', title: 'CTA Button + Phone Overlay', desc: 'Clear action button shown on the image itself' },
-                  { icon: '#️⃣', title: '8+ Hashtags', desc: 'Niche-specific hashtags for maximum organic reach' },
-                  { icon: '📱', title: 'Platform Previews', desc: 'See exactly how it looks on Instagram, Facebook & Story' },
-                  { icon: '✏️', title: 'Edit Everything', desc: 'Change text, colors, image after generation' },
-                  { icon: '📤', title: 'Export Package', desc: 'Download image + copy for WhatsApp + LinkedIn format' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-lg shrink-0">{item.icon}</span>
-                    <div><p className="text-sm font-semibold text-white">{item.title}</p><p className="text-xs text-gray-400">{item.desc}</p></div>
-                  </div>
+            {/* Business Type */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b8', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>Business Type *</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                {BUSINESS_TYPES.map(bt => (
+                  <button key={bt} onClick={() => update('businessType', bt)}
+                    style={{ padding: '8px 12px', borderRadius: 10, border: `1px solid ${form.businessType === bt ? '#6c47ff' : '#1e293b'}`, background: form.businessType === bt ? 'rgba(108,71,255,0.2)' : 'transparent', color: form.businessType === bt ? '#a78bfa' : '#64748b', fontSize: 13, cursor: 'pointer', textAlign: 'left' }}>
+                    {bt}
+                  </button>
                 ))}
               </div>
-              <button onClick={handleGenerate} disabled={!business.trim() || generating}
-                className={`w-full mt-5 py-4 rounded-xl font-bold text-base transition-all ${!business.trim() || generating ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg'}`}>
-                {generating ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-5 h-5 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
-                    Generating Your Complete Ad Creative...
-                  </span>
-                ) : '⚡ Generate Complete Ad Creative'}
-              </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* PREVIEW TAB */}
-      {tab === 'preview' && creative && (
-        <div className="flex flex-col xl:flex-row" style={{ minHeight: 'calc(100vh - 73px)' }}>
-          {/* Left Edit Panel */}
-          <div className="w-full xl:w-72 bg-gray-900 border-r border-gray-800 overflow-y-auto shrink-0">
-            <div className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm">✏️ Edit</h3>
-                <button onClick={regenerateImage} className="text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-lg">🔄 New Image</button>
-              </div>
+            {/* Grid fields */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
               {[
-                { field: 'headline', label: 'Headline', rows: 0 },
-                { field: 'subheadline', label: 'Subheadline', rows: 0 },
-                { field: 'offer', label: 'Offer Badge', rows: 0 },
-                { field: 'ctaText', label: 'CTA Button', rows: 0 },
-                { field: 'phone', label: 'Phone', rows: 0 },
-                { field: 'adCopy', label: 'Ad Copy', rows: 3 },
-                { field: 'hashtags', label: 'Hashtags', rows: 2 },
-              ].map(({ field, label, rows }) => (
-                <div key={field}>
-                  <label className="text-xs text-gray-400 mb-1 block">{label}</label>
-                  {rows > 0 ? (
-                    <textarea value={creative[field as keyof AdCreative]} onChange={e => updateCreative(field as keyof AdCreative, e.target.value)} rows={rows} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-purple-500 resize-none" />
-                  ) : (
-                    <input value={creative[field as keyof AdCreative]} onChange={e => updateCreative(field as keyof AdCreative, e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none focus:border-purple-500" />
-                  )}
+                { key: 'city', label: 'City', placeholder: 'e.g. Indore' },
+                { key: 'phone', label: 'Phone / WhatsApp', placeholder: '+91 98765 43210' },
+                { key: 'website', label: 'Website', placeholder: 'www.yourbusiness.com' },
+                { key: 'target', label: 'Target Audience', placeholder: 'e.g. Young professionals' },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b8', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>{label}</label>
+                  <input
+                    value={form[key as keyof typeof form]}
+                    onChange={e => update(key, e.target.value)}
+                    placeholder={placeholder}
+                    style={{ width: '100%', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 10, padding: '10px 14px', color: '#f0f0ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+                  />
                 </div>
               ))}
-              <div>
-                <label className="text-xs text-gray-400 mb-1 block">Brand Color</label>
-                <div className="flex gap-2">
-                  <input type="color" value={creative.primaryColor} onChange={e => updateCreative('primaryColor', e.target.value)} className="w-10 h-9 rounded cursor-pointer" />
-                  <input value={creative.primaryColor} onChange={e => updateCreative('primaryColor', e.target.value)} className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-xs focus:outline-none" />
-                </div>
-              </div>
-              <div className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2">
-                <span className="text-xs text-gray-300">Text Overlay on Image</span>
-                <button onClick={() => setShowOverlay(!showOverlay)} className={`w-10 h-5 rounded-full transition-all relative shrink-0 ${showOverlay ? 'bg-purple-600' : 'bg-gray-600'}`}>
-                  <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${showOverlay ? 'left-5' : 'left-0.5'}`} />
-                </button>
-              </div>
-              <button onClick={() => setTab('export')} className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-white text-sm font-bold rounded-lg transition-colors">📤 Export Package →</button>
-            </div>
-          </div>
-
-          {/* Right Preview */}
-          <div className="flex-1 overflow-y-auto bg-gray-950 p-6">
-            <div className="flex gap-2 mb-6 flex-wrap">
-              {PLATFORMS.map(p => (
-                <button key={p.id} onClick={() => setActivePreview(p.id)}
-                  className={`text-xs px-3 py-2 rounded-lg font-medium flex items-center gap-1.5 transition-all ${activePreview === p.id ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:text-white'}`}>
-                  {p.icon} {p.label} <span className="opacity-50">{p.size}</span>
-                </button>
-              ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-              <div>
-                <p className="text-xs text-gray-400 mb-2">🖼️ Ad Creative with Overlay</p>
-                <AdImagePreview creative={creative} platform={activePreview} showOverlay={showOverlay} />
-                <div className="mt-3 flex gap-2">
-                  <a href={creative.imageUrl} download target="_blank" rel="noopener noreferrer" className="flex-1 text-center text-xs bg-green-600 hover:bg-green-500 text-white py-2 rounded-lg font-medium">⬇️ Download</a>
-                  <button onClick={regenerateImage} className="flex-1 text-xs bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg">🔄 New Image</button>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-400 mb-2">{activePreview === 'instagram' || activePreview === 'story' ? '📸 Instagram Post Preview' : '👥 Facebook Ad Preview'}</p>
-                {activePreview === 'instagram' || activePreview === 'story' ? <InstagramPreview creative={creative} /> : <FacebookPreview creative={creative} />}
-              </div>
+            {/* Offer */}
+            <div style={{ marginBottom: 28 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b8', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>Special Offer / USP</label>
+              <input
+                value={form.offer}
+                onChange={e => update('offer', e.target.value)}
+                placeholder="e.g. Free consultation for first visit, 50% OFF this month"
+                style={{ width: '100%', background: '#0f172a', border: '1px solid #1e293b', borderRadius: 10, padding: '10px 14px', color: '#f0f0ff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
 
-            {/* Copy Package */}
-            <div className="mt-8 bg-gray-900 border border-gray-800 rounded-2xl p-5">
-              <h3 className="font-bold text-sm mb-4">📝 Complete Ad Copy Package</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {[
-                  { label: 'HEADLINE', color: 'text-purple-400', content: `${creative.headline}\n${creative.subheadline}` },
-                  { label: 'OFFER + CTA', color: 'text-green-400', content: `${creative.offer}\nCTA: ${creative.ctaText}` },
-                ].map(({ label, color, content }) => (
-                  <div key={label} className="bg-gray-800 rounded-xl p-3">
-                    <div className="flex justify-between mb-2">
-                      <p className={`text-xs font-semibold ${color}`}>{label}</p>
-                      <button onClick={() => copyText(content, label)} className="text-xs text-gray-500 hover:text-white">{copied === label ? '✅ Copied!' : '📋 Copy'}</button>
-                    </div>
-                    <p className="text-white text-sm whitespace-pre-line">{content}</p>
-                  </div>
+            {/* Theme Picker */}
+            <div style={{ marginBottom: 28 }}>
+              <label style={{ fontSize: 12, fontWeight: 700, color: '#9090b8', letterSpacing: 1, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>Creative Theme</label>
+              <div style={{ display: 'flex', gap: 10 }}>
+                {THEMES.map((t, i) => (
+                  <button key={i} onClick={() => setSelectedTheme(i)}
+                    style={{ flex: 1, padding: '10px 8px', borderRadius: 10, border: `2px solid ${selectedTheme === i ? t.accent : '#1e293b'}`, background: t.primary, cursor: 'pointer', fontSize: 11, color: '#fff', fontWeight: 600 }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: t.accent, margin: '0 auto 6px' }} />
+                    {t.name}
+                  </button>
                 ))}
-                <div className="bg-gray-800 rounded-xl p-3 md:col-span-2">
-                  <div className="flex justify-between mb-2">
-                    <p className="text-xs font-semibold text-blue-400">AD COPY — Paste in Facebook/Instagram Ads Manager</p>
-                    <button onClick={() => copyText(creative.adCopy, 'adcopy')} className="text-xs text-gray-500 hover:text-white">{copied === 'adcopy' ? '✅ Copied!' : '📋 Copy'}</button>
-                  </div>
-                  <p className="text-gray-200 text-sm leading-relaxed">{creative.adCopy}</p>
-                </div>
-                <div className="bg-gray-800 rounded-xl p-3 md:col-span-2">
-                  <div className="flex justify-between mb-2">
-                    <p className="text-xs font-semibold text-yellow-400">HASHTAGS</p>
-                    <button onClick={() => copyText(creative.hashtags, 'hashtags')} className="text-xs text-gray-500 hover:text-white">{copied === 'hashtags' ? '✅ Copied!' : '📋 Copy'}</button>
-                  </div>
-                  <p className="text-gray-300 text-sm">{creative.hashtags}</p>
-                </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* EXPORT TAB */}
-      {tab === 'export' && creative && (
-        <div className="max-w-2xl mx-auto p-6 space-y-4">
-          <h2 className="text-xl font-bold mb-2">📤 Export Your Ad Creative Package</h2>
-          <p className="text-gray-400 text-sm mb-6">Everything you need to run your ad campaign across all platforms</p>
-          {[
-            { icon: '🖼️', title: 'Download Ad Image', desc: 'High-res 1080×1080 image with AI generated photo', action: () => window.open(creative.imageUrl, '_blank'), btn: 'Download Image', color: 'bg-green-600 hover:bg-green-500' },
-            { icon: '📋', title: 'Copy Full Ad Package', desc: 'Headline + copy + hashtags for Ads Manager', action: () => copyText(`${creative.headline}\n\n${creative.adCopy}\n\n${creative.hashtags}`, 'full'), btn: copied === 'full' ? '✅ Copied!' : 'Copy All', color: 'bg-blue-600 hover:bg-blue-500' },
-            { icon: '📱', title: 'Copy WhatsApp Message', desc: 'Formatted message to blast via WhatsApp Business', action: () => copyText(`*${creative.headline}*\n\n${creative.offer}\n\n${creative.adCopy}\n\n📞 ${creative.phone}`, 'wa'), btn: copied === 'wa' ? '✅ Copied!' : 'Copy WhatsApp', color: 'bg-green-700 hover:bg-green-600' },
-            { icon: '💼', title: 'Copy LinkedIn Post', desc: 'Professional format optimized for LinkedIn', action: () => copyText(`${creative.headline}\n\n${creative.subheadline}\n\n${creative.adCopy}\n\n${creative.hashtags.split(' ').slice(0,5).join(' ')}`, 'li'), btn: copied === 'li' ? '✅ Copied!' : 'Copy LinkedIn', color: 'bg-blue-800 hover:bg-blue-700' },
-            { icon: '📲', title: 'Copy Instagram Caption', desc: 'With emojis and hashtags for IG post', action: () => copyText(`${creative.headline} 🔥\n\n${creative.offer}\n\n${creative.adCopy}\n\n📞 ${creative.phone}\n\n${creative.hashtags}`, 'ig'), btn: copied === 'ig' ? '✅ Copied!' : 'Copy Instagram', color: 'bg-pink-600 hover:bg-pink-500' },
-          ].map((item, i) => (
-            <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">{item.icon}</span>
-                <div><p className="font-semibold text-sm">{item.title}</p><p className="text-xs text-gray-400">{item.desc}</p></div>
-              </div>
-              <button onClick={item.action} className={`${item.color} text-white text-xs font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-colors shrink-0`}>{item.btn}</button>
-            </div>
-          ))}
-          <div className="bg-purple-900/20 border border-purple-600/30 rounded-xl p-4 mt-4">
-            <p className="text-sm font-semibold text-purple-300 mb-1">🚀 Next Step: Boost This Ad</p>
-            <p className="text-xs text-gray-400">Facebook Ads Manager → Create Campaign → Upload image → Paste ad copy → Set ₹200/day budget → Launch! Your ad will reach 5,000-15,000 people daily.</p>
+            {/* Generate Button */}
+            <button
+              onClick={generate}
+              disabled={loading || !form.businessName || !form.businessType}
+              style={{ width: '100%', padding: '16px 0', borderRadius: 14, background: !form.businessName || !form.businessType ? '#1e293b' : 'linear-gradient(135deg,#6c47ff,#a855f7)', color: 'white', border: 'none', fontSize: 16, fontWeight: 800, cursor: !form.businessName || !form.businessType ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+              {loading ? '✨ Generating your creative...' : '🚀 Generate Rich Ad Creative'}
+            </button>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // ── RESULT STEP ──
+  const theme = THEMES[selectedTheme];
+  const platform = PLATFORMS[selectedPlatform];
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#07070f', color: '#f0f0ff', padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+
+        {/* Top Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <div>
+            <button onClick={() => setStep('form')} style={{ background: 'none', border: '1px solid #1e293b', borderRadius: 8, padding: '6px 14px', color: '#64748b', cursor: 'pointer', fontSize: 13, marginBottom: 8 }}>
+              ← Back
+            </button>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>Your Ad Creative</h2>
+            <p style={{ margin: 0, color: '#6060a0', fontSize: 14 }}>{form.businessName} · {form.city}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={generate}
+              style={{ background: 'rgba(108,71,255,0.15)', border: '1px solid rgba(108,71,255,0.3)', borderRadius: 10, padding: '10px 20px', color: '#a78bfa', cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>
+              🔄 Regenerate
+            </button>
+            <button
+              style={{ background: 'linear-gradient(135deg,#6c47ff,#a855f7)', border: 'none', borderRadius: 10, padding: '10px 20px', color: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 700 }}>
+              ⬇ Download
+            </button>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24 }}>
+
+          {/* LEFT — Creative Preview */}
+          <div>
+            {/* Platform Tabs */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {PLATFORMS.map((p, i) => (
+                <button key={i} onClick={() => setSelectedPlatform(i)}
+                  style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${selectedPlatform === i ? '#6c47ff' : '#1e293b'}`, background: selectedPlatform === i ? 'rgba(108,71,255,0.15)' : 'transparent', color: selectedPlatform === i ? '#a78bfa' : '#64748b', fontSize: 13, cursor: 'pointer', fontWeight: 600 }}>
+                  {p.label}
+                  <span style={{ marginLeft: 6, fontSize: 11, color: '#475569' }}>{p.size}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Theme Row */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {THEMES.map((t, i) => (
+                <button key={i} onClick={() => setSelectedTheme(i)}
+                  style={{ width: 32, height: 32, borderRadius: '50%', background: t.accent, border: `3px solid ${selectedTheme === i ? '#fff' : 'transparent'}`, cursor: 'pointer' }}
+                  title={t.name} />
+              ))}
+              <span style={{ fontSize: 12, color: '#475569', alignSelf: 'center', marginLeft: 4 }}>Theme</span>
+            </div>
+
+            {/* Creative */}
+            <div style={{ maxWidth: 540 }}>
+              {creative && (
+                <AdCreativeCard
+                  creative={creative}
+                  theme={theme}
+                  platform={platform}
+                  businessName={form.businessName}
+                  city={form.city}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT — Copy Panel */}
+          <div>
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {(['creative', 'copy'] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)}
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: `1px solid ${activeTab === tab ? '#6c47ff' : '#1e293b'}`, background: activeTab === tab ? 'rgba(108,71,255,0.15)' : 'transparent', color: activeTab === tab ? '#a78bfa' : '#64748b', fontSize: 13, cursor: 'pointer', fontWeight: 600, textTransform: 'capitalize' }}>
+                  {tab === 'creative' ? '🎨 Details' : '📝 Copy & Text'}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'creative' && creative && (
+              <div>
+                <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: 16, marginBottom: 12 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Features Included</div>
+                  {creative.features?.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: i < creative.features.length - 1 ? '1px solid #1e293b' : 'none', fontSize: 13, color: '#cbd5e1' }}>
+                      <span style={{ color: '#22c55e', fontSize: 14 }}>✓</span> {f}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 12, padding: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#475569', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Trust Badges</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {creative.trustBadges?.map((b, i) => (
+                      <span key={i} style={{ background: '#1e293b', borderRadius: 100, padding: '4px 12px', fontSize: 12, color: '#94a3b8' }}>✓ {b}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'copy' && creative && <CopyPanel creative={creative} />}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
