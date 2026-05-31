@@ -122,9 +122,11 @@ export default function SmartResizeTool() {
     setGenerating(true);
     setGenerated(false);
     const toGenerate = PLATFORM_SIZES.filter(s => selectedSizes.includes(s.id));
-    const results: ResizedImage[] = toGenerate.map(s => ({ sizeId: s.id, dataUrl: '', loading: true }));
-    setResizedImages(results);
 
+    // Initialise all as loading
+    setResizedImages(toGenerate.map(s => ({ sizeId: s.id, dataUrl: '', loading: true })));
+
+    // Resize each one and update progressively
     for (let i = 0; i < toGenerate.length; i++) {
       const size = toGenerate[i];
       try {
@@ -135,17 +137,6 @@ export default function SmartResizeTool() {
       }
     }
 
-    // Fix: iterate correctly
-    const results2: ResizedImage[] = [];
-    for (const size of toGenerate) {
-      try {
-        const dataUrl = await resizeImageOnCanvas(uploadedImage, size.w, size.h, fit, bgColor);
-        results2.push({ sizeId: size.id, dataUrl, loading: false });
-      } catch {
-        results2.push({ sizeId: size.id, dataUrl: '', loading: false });
-      }
-    }
-    setResizedImages(results2);
     setGenerating(false);
     setGenerated(true);
   }
